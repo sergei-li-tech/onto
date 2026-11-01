@@ -1,0 +1,11 @@
+.git
+.cursor
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.venv
+**/node_modules
+web/dist
+agent-transcripts
+**/.DS_Store
+

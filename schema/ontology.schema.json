@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/sergei-li-tech/onto/main/schema/ontology.schema.json",
+  "title": "Ontology",
+  "type": "object",
+  "required": [
+    "domain",
+    "version",
+    "notes",
+    "entities",
+    "relationships",
+    "actions",
+    "rules",
+    "open_questions",
+    "out_of_scope"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "domain": { "type": "string", "minLength": 1 },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "based_on": {
+      "type": "object",
+      "required": ["id", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" }
+      }
+    },
+    "updated_at": { "type": "string" },
+    "author": { "type": "string" },
+    "notes": { "type": "string" },
+    "entities": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entity" }
+    },
+    "relationships": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/relationship" }
+    },
+    "actions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/action" }
+    },
+    "rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rule" }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "out_of_scope": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "layout": { "$ref": "#/$defs/layout" }
+  },
+  "$defs": {
+    "cardinality": {
+      "type": "string",
+      "enum": ["0", "1", "many"]
+    },
+    "attributeType": {
+      "type": "string",
+      "enum": [
+        "string",
+        "integer",
+        "decimal",
+        "boolean",
+        "date",
+        "datetime",
+        "enum",
+        "ref"
+      ]
+    },
+    "attribute": {
+      "type": "object",
+      "required": ["id", "type", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "type": { "$ref": "#/$defs/attributeType" },
+        "name": { "type": "string", "minLength": 1 },
+        "required": { "type": "boolean" },
+        "values": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "entity": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "enum" } } },
+          "then": { "required": ["values"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "ref" } } },
+          "then": { "required": ["entity"] }
+        }
+      ]
+    },
+    "entity": {
+      "type": "object",
+      "required": ["id", "name", "attributes"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "template_name": { "type": "string" },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "type": "string" },
+        "unique_identifier": { "type": "string" },
+        "primary_key": { "type": "string", "minLength": 1 },
+        "attributes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/attribute" }
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "required": [
+        "id",
+        "from",
+        "to",
+        "name",
+        "from_min",
+        "from_max",
+        "to_min",
+        "to_max"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "from_min": { "$ref": "#/$defs/cardinality" },
+        "from_max": { "$ref": "#/$defs/cardinality" },
+        "to_min": { "$ref": "#/$defs/cardinality" },
+        "to_max": { "$ref": "#/$defs/cardinality" },
+        "notes": { "type": "string" }
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+        "entity": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "from_states": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "to_state": { "type": "string", "minLength": 1 },
+        "requires_confirmation": { "type": "boolean" }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "required": ["id", "statement"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+        "statement": { "type": "string", "minLength": 1 }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "x", "y"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "x": { "type": "number" },
+              "y": { "type": "number" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
