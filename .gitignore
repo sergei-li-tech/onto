@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+
+# OS & Editors
+.DS_Store
+.idea/
+.vscode/
+
+# Secrets & Local Ephemeral
+.env*
+secrets/
+scratch/
+
+output/
+docs/

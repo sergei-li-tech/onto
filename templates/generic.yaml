@@ -1,0 +1,27 @@
+domain: default
+version: 1.0.0
+updated_at: "2026-10-16T00:00:00+09:00"
+author: onto
+notes: ""
+
+entities:
+  - id: client
+    name: Client
+    aliases: []
+    attributes: []
+
+relationships: []
+
+actions: []
+
+rules: []
+
+open_questions: []
+
+out_of_scope: []
+
+layout:
+  nodes:
+    - id: client
+      x: 0
+      y: 0
