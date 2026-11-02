@@ -3,16 +3,17 @@ import type { Attribute, AttributeType, Entity, Ontology } from "../types";
 import { CommaListInput } from "./CommaListInput";
 import { InfoTip } from "./InfoTip";
 import { attributeIdFromName, renameAttributeInEntity } from "../lib/autoIds";
+import { useT } from "../i18n";
 
-const TYPE_LABELS: Record<AttributeType, string> = {
-  string: "Text",
-  integer: "Integer",
-  decimal: "Decimal / Money",
-  boolean: "Yes / No",
-  date: "Date",
-  datetime: "Date and time",
-  enum: "State list (Enum)",
-  ref: "Reference to entity",
+const TYPE_KEYS: Record<AttributeType, string> = {
+  string: "type.string",
+  integer: "type.integer",
+  decimal: "type.decimal",
+  boolean: "type.boolean",
+  date: "type.date",
+  datetime: "type.datetime",
+  enum: "type.enum",
+  ref: "type.ref",
 };
 
 type Props = {
@@ -54,6 +55,8 @@ function AttributeNameField({
 }
 
 export function EntityAttributesSection({ doc, entity, patchEntity }: Props) {
+  const t = useT();
+
   function patchAttributes(mapper: (attrs: Attribute[]) => Attribute[]) {
     patchEntity((e) => ({ ...e, attributes: mapper(e.attributes) }));
   }
@@ -74,7 +77,7 @@ export function EntityAttributesSection({ doc, entity, patchEntity }: Props) {
   }
 
   function addAttribute() {
-    const name = "Field description.";
+    const name = t("attributes.newFieldName");
     const id = attributeIdFromName(name, entity);
     patchEntity((e) => ({
       ...e,
@@ -94,14 +97,14 @@ export function EntityAttributesSection({ doc, entity, patchEntity }: Props) {
   return (
     <section className="card-block attributes-section">
       <h3 className="heading-with-info">
-        Fields
-        <InfoTip text="Fields of this entity." />
+        {t("attributes.fields")}
+        <InfoTip text={t("attributes.fieldsInfo")} />
       </h3>
 
       {entity.attributes.map((attr) => (
         <div key={attr.id} className="attribute-card">
           <div className="field">
-            <label>Type</label>
+            <label>{t("attributes.type")}</label>
             <select
               value={attr.type}
               onChange={(e) => {
@@ -114,15 +117,15 @@ export function EntityAttributesSection({ doc, entity, patchEntity }: Props) {
                 updateAttribute(attr.id, extra);
               }}
             >
-              {(Object.keys(TYPE_LABELS) as AttributeType[]).map((t) => (
-                <option key={t} value={t}>
-                  {TYPE_LABELS[t]}
+              {(Object.keys(TYPE_KEYS) as AttributeType[]).map((type) => (
+                <option key={type} value={type}>
+                  {t(TYPE_KEYS[type])}
                 </option>
               ))}
             </select>
           </div>
           <div className="field">
-            <label>Field name</label>
+            <label>{t("attributes.fieldName")}</label>
             <AttributeNameField
               name={attr.name}
               onCommit={(next) => commitAttributeName(attr.id, next)}
@@ -134,31 +137,31 @@ export function EntityAttributesSection({ doc, entity, patchEntity }: Props) {
               checked={Boolean(attr.required)}
               onChange={(e) => updateAttribute(attr.id, { required: e.target.checked })}
             />
-            Required field
+            {t("attributes.required")}
           </label>
 
           {attr.type === "enum" && (
             <div className="field">
               <div className="heading-with-info">
-                <label>States</label>
-                <InfoTip text="Lifecycle stages, comma-separated." />
+                <label>{t("attributes.states")}</label>
+                <InfoTip text={t("attributes.statesInfo")} />
               </div>
               <CommaListInput
                 value={attr.values ?? []}
                 onCommit={(values) => updateAttribute(attr.id, { values })}
-                placeholder="draft, confirmed, completed"
+                placeholder={t("attributes.statesPlaceholder")}
               />
             </div>
           )}
 
           {attr.type === "ref" && (
             <div className="field">
-              <label>Entity</label>
+              <label>{t("attributes.entity")}</label>
               <select
                 value={attr.entity ?? ""}
                 onChange={(e) => updateAttribute(attr.id, { entity: e.target.value })}
               >
-                <option value="">— select —</option>
+                <option value="">{t("attributes.select")}</option>
                 {doc.entities
                   .filter((en) => en.id !== entity.id)
                   .map((en) => (
@@ -176,14 +179,14 @@ export function EntityAttributesSection({ doc, entity, patchEntity }: Props) {
               className="list-item attr-remove"
               onClick={() => removeAttribute(attr.id)}
             >
-              Delete field
+              {t("attributes.deleteField")}
             </button>
           )}
         </div>
       ))}
 
       <button type="button" className="list-item card-action" onClick={addAttribute}>
-        + Field
+        {t("attributes.addField")}
       </button>
     </section>
   );

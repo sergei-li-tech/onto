@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { useT } from "../i18n";
 
 export function NotesField({
   id,
   label,
   notes,
-  placeholder = "Raw notes",
+  placeholder,
   rows = 3,
   labelClassName = "section-title",
   onCommit,
@@ -17,7 +18,9 @@ export function NotesField({
   labelClassName?: string;
   onCommit: (next: string) => void;
 }) {
+  const t = useT();
   const [draft, setDraft] = useState(notes);
+  const resolvedPlaceholder = placeholder ?? t("sidebar.notesPlaceholder");
 
   useEffect(() => {
     setDraft(notes);
@@ -31,7 +34,7 @@ export function NotesField({
       <textarea
         id={id}
         rows={rows}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => {

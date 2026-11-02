@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { TEMPLATE_LABEL } from "../lib/templates";
+import { useT } from "../i18n";
 import { useOntologyStore } from "../store";
 import { parseOntologyYaml } from "../lib/yaml";
 import { pickYamlFile } from "../lib/fileAccess";
 import { InfoTip } from "./InfoTip";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function StartScreen() {
   const openTemplate = useOntologyStore((s) => s.openTemplate);
   const loadDocument = useOntologyStore((s) => s.loadDocument);
+  const t = useT();
   const [domain, setDomain] = useState("");
 
   async function openExisting() {
@@ -19,19 +21,22 @@ export function StartScreen() {
 
   return (
     <div className="start-screen">
-      <h2 className="heading-with-info">
-        Editor
-        <InfoTip text="Start from a template entity or open a saved file. Templates are not overwritten." />
-      </h2>
+      <div className="start-head">
+        <h2 className="heading-with-info">
+          {t("start.title")}
+          <InfoTip text={t("start.info")} />
+        </h2>
+        <LanguageSwitcher variant="screen" />
+      </div>
 
       <div className="field">
         <div className="heading-with-info">
-          <label htmlFor="client-domain">Domain</label>
-          <InfoTip text="Latin characters, will be used in the filename." />
+          <label htmlFor="client-domain">{t("start.domain")}</label>
+          <InfoTip text={t("start.domainInfo")} />
         </div>
         <input
           id="client-domain"
-          placeholder="e.g. salon-gangnam"
+          placeholder={t("start.domainPlaceholder")}
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
         />
@@ -40,14 +45,14 @@ export function StartScreen() {
       <div className="template-grid">
         <div className="template-card">
           <button type="button" onClick={() => openTemplate("generic", domain)}>
-            <strong>{TEMPLATE_LABEL}</strong>
+            <strong>{t("start.templateGeneric")}</strong>
           </button>
-          <InfoTip text="Starting entity — “Client”." />
+          <InfoTip text={t("start.templateInfo")} />
         </div>
       </div>
 
       <button type="button" className="list-item" onClick={() => void openExisting()}>
-        Open file…
+        {t("start.openFile")}
       </button>
     </div>
   );

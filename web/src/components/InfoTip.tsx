@@ -1,8 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { useT } from "../i18n";
 
 const POP_WIDTH = 240;
 
 export function InfoTip({ text }: { text: string }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const rootRef = useRef<HTMLSpanElement>(null);
@@ -46,7 +48,7 @@ export function InfoTip({ text }: { text: string }) {
       <button
         type="button"
         className="info-tip-btn"
-        aria-label="Info"
+        aria-label={t("info.label")}
         aria-expanded={open}
         aria-controls={tipId}
         onClick={(event) => {

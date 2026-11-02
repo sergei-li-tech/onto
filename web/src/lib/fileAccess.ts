@@ -1,6 +1,8 @@
 import type { Ontology } from "../types";
 import { serializeOntology } from "./yaml";
 import { validateOntology } from "./validate";
+import { formatValidationIssues } from "./validationMessages";
+import { t } from "../i18n";
 
 export type FileHandleState = {
   handle: FileSystemFileHandle | null;
@@ -9,7 +11,7 @@ export type FileHandleState = {
 
 export async function pickYamlFile(): Promise<{ text: string; handle: FileSystemFileHandle } | null> {
   if (!("showOpenFilePicker" in window)) {
-    alert("Please open the app in Chrome — disk file access is required.");
+    alert(t("file.chromeOpen"));
     return null;
   }
   const [handle] = await window.showOpenFilePicker({
@@ -27,11 +29,11 @@ export async function pickYamlFile(): Promise<{ text: string; handle: FileSystem
 export async function saveYamlAs(doc: Ontology): Promise<FileSystemFileHandle | null> {
   const errors = validateOntology(doc);
   if (errors.length) {
-    alert(`Save blocked:\n${errors.slice(0, 8).join("\n")}`);
+    alert(t("file.saveBlocked", { errors: formatValidationIssues(errors).slice(0, 8).join("\n") }));
     return null;
   }
   if (!("showSaveFilePicker" in window)) {
-    alert("Saving is supported in Chrome.");
+    alert(t("file.chromeSave"));
     return null;
   }
   const handle = await window.showSaveFilePicker({
@@ -53,7 +55,7 @@ export async function saveYamlToHandle(
 ): Promise<boolean> {
   const errors = validateOntology(doc);
   if (errors.length) {
-    alert(`Save blocked:\n${errors.slice(0, 8).join("\n")}`);
+    alert(t("file.saveBlocked", { errors: formatValidationIssues(errors).slice(0, 8).join("\n") }));
     return false;
   }
   await writeHandle(handle, doc);

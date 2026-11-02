@@ -4,6 +4,7 @@ import type { Ontology } from "../types";
 import { viewportCenterScreenPoint } from "../lib/graphPlacement";
 import { useOntologyStore } from "../store";
 import { OntologyGraph } from "./OntologyGraph";
+import { useT } from "../i18n";
 
 function AddEntityButton({
   canvasRef,
@@ -11,6 +12,7 @@ function AddEntityButton({
   canvasRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const addEntity = useOntologyStore((s) => s.addEntity);
+  const t = useT();
   const { screenToFlowPosition } = useReactFlow();
 
   return (
@@ -27,7 +29,7 @@ function AddEntityButton({
         addEntity(screenToFlowPosition(center));
       }}
     >
-      + Entity
+      {t("graph.addEntity")}
     </button>
   );
 }

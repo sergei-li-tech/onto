@@ -5,8 +5,6 @@ import genericRaw from "../../../templates/generic.yaml?raw";
 
 export const TEMPLATE_ID: TemplateId = "generic";
 
-export const TEMPLATE_LABEL = "Generic business";
-
 export function loadTemplate(): Ontology {
   return parseOntologyYaml(genericRaw);
 }

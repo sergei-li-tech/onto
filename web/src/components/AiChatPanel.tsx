@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Entity, Ontology } from "../types";
 import { applyOperations } from "../lib/applyOperations";
-import { sendOntologyChat, type ChatScope } from "../lib/aiChat";
+import { AiChatError, sendOntologyChat, type ChatScope } from "../lib/aiChat";
 import { composeSchemaInput, draftHistory, takeDraftReply } from "../lib/draftHandoff";
 import { operationsInEntityScope } from "../lib/entityScope";
 import { pruneUnrequestedEntityAttributes } from "../lib/pruneEntityAttributes";
@@ -10,6 +10,8 @@ import {
   relationshipIdAfterApply,
 } from "../lib/relationshipScope";
 import { validateOntology } from "../lib/validate";
+import { formatValidationIssues } from "../lib/validationMessages";
+import { getLang, useT } from "../i18n";
 import { useOntologyStore } from "../store";
 import { InfoTip } from "./InfoTip";
 
@@ -103,6 +105,7 @@ function AssistantChat({
 }: AssistantProps) {
   const patchDoc = useOntologyStore((s) => s.patchDoc);
   const setSelection = useOntologyStore((s) => s.setSelection);
+  const t = useT();
   const thread = useThread(threadKey);
   const [open, setOpen] = useState(initiallyOpen ?? false);
   const seenExpand = useRef(0);
@@ -126,9 +129,7 @@ function AssistantChat({
     if (scope === "relationship" && !relationshipId) return;
 
     if (!billingOk) {
-      const ok = window.confirm(
-        "This request will use an external paid API. Continue for this browser session?",
-      );
+      const ok = window.confirm(t("ai.billingConfirm"));
       if (!ok) return;
       sessionStorage.setItem("onto-ai-billing-ok", "1");
       setBillingOk(true);
@@ -146,7 +147,15 @@ function AssistantChat({
     }));
 
     try {
-      const res = await sendOntologyChat(text, doc, scope, entityId, history, relationshipId);
+      const res = await sendOntologyChat(
+        text,
+        doc,
+        scope,
+        entityId,
+        history,
+        relationshipId,
+        getLang(),
+      );
       if (scope === "draft") {
         const draft = takeDraftReply(res);
         writeThread(key, (current) => ({
@@ -162,21 +171,21 @@ function AssistantChat({
       if (scope === "global") {
         const pruned = pruneUnrequestedEntityAttributes(text, operations);
         if (JSON.stringify(pruned) !== JSON.stringify(operations)) {
-          message = `${message}\n\nProperties not mentioned in the request were not added.`;
+          message = `${message}\n\n${t("ai.noteUnrequestedAttributes")}`;
         }
         operations = pruned;
       }
       if (scope === "entity" && entityId) {
         const kept = operationsInEntityScope(doc, entityId, operations);
         if (kept.length < operations.length) {
-          message = `${message}\n\nChanges to other entities were discarded. Use schema assistant for cross-entity edits.`;
+          message = `${message}\n\n${t("ai.noteEntityScope")}`;
         }
         operations = kept;
       }
       if (scope === "relationship" && relationshipId) {
         const kept = operationsInRelationshipScope(relationshipId, operations);
         if (JSON.stringify(kept) !== JSON.stringify(operations)) {
-          message = `${message}\n\nChanges to other relationships were discarded. Use schema assistant for cross-relationship edits.`;
+          message = `${message}\n\n${t("ai.noteRelationshipScope")}`;
         }
         operations = kept;
       }
@@ -187,10 +196,19 @@ function AssistantChat({
         pending: operations.length > 0 ? { assistant_message: message, operations } : null,
       }));
     } catch (e) {
+      const status = e instanceof AiChatError ? e.status : null;
+      const message =
+        status === null
+          ? t("ai.errorNetwork")
+          : status === 503
+            ? t("ai.errorApiKey")
+            : status === 400
+              ? t("ai.errorBadRequest")
+              : t("ai.errorHttp", { status });
       writeThread(key, (current) => ({
         ...current,
         loading: false,
-        error: e instanceof Error ? e.message : String(e),
+        error: message,
       }));
     }
   }
@@ -208,7 +226,7 @@ function AssistantChat({
     if (errors.length > 0) {
       writeThread(threadKey, (current) => ({
         ...current,
-        error: errors.slice(0, 5).join("\n"),
+        error: formatValidationIssues(errors, t).slice(0, 5).join("\n"),
       }));
       return;
     }
@@ -262,7 +280,7 @@ function AssistantChat({
                   <div className="draft-brief">
                     <div className="draft-brief-text">{line.brief}</div>
                     <button type="button" onClick={() => handoffBrief(line.brief ?? "")}>
-                      Send to schema assistant
+                      {t("ai.sendToSchema")}
                     </button>
                   </div>
                 ) : null}
@@ -271,10 +289,10 @@ function AssistantChat({
           </div>
           {thread.pending && (
             <div className="ai-chat-pending">
-              <strong>Pending changes</strong>
+              <strong>{t("ai.pendingChanges")}</strong>
               <div className="ai-chat-pending-actions">
                 <button type="button" className="primary" onClick={applyPending}>
-                  Apply
+                  {t("ai.apply")}
                 </button>
                 <button
                   type="button"
@@ -282,7 +300,7 @@ function AssistantChat({
                     writeThread(threadKey, (current) => ({ ...current, pending: null }))
                   }
                 >
-                  Discard
+                  {t("ai.discard")}
                 </button>
               </div>
             </div>
@@ -309,7 +327,7 @@ function AssistantChat({
               disabled={thread.loading || !thread.input.trim()}
               onClick={() => void onSend()}
             >
-              {thread.loading ? "…" : "Send"}
+              {thread.loading ? "…" : t("ai.send")}
             </button>
           </div>
         </div>
@@ -319,6 +337,7 @@ function AssistantChat({
 }
 
 export function DraftAssistant({ doc }: { doc: Ontology }) {
+  const t = useT();
   return (
     <AssistantChat
       doc={doc}
@@ -326,10 +345,10 @@ export function DraftAssistant({ doc }: { doc: Ontology }) {
       threadKey="draft"
       entityId={null}
       relationshipId={null}
-      title="Draft"
-      hint="Suggests entities and fields without modifying the diagram directly. Use the button to pass notes to the schema assistant."
-      example="Example: “appointment with specialist, service, and time”."
-      placeholder="Notes…"
+      title={t("ai.draft")}
+      hint={t("ai.draftHint")}
+      example={t("ai.draftExample")}
+      placeholder={t("ai.draftPlaceholder")}
       variant="column"
       initiallyOpen={false}
       extraClass="draft-chat"
@@ -338,6 +357,7 @@ export function DraftAssistant({ doc }: { doc: Ontology }) {
 }
 
 export function AiChatPanel({ doc }: { doc: Ontology }) {
+  const t = useT();
   return (
     <AssistantChat
       doc={doc}
@@ -345,10 +365,10 @@ export function AiChatPanel({ doc }: { doc: Ontology }) {
       threadKey="global"
       entityId={null}
       relationshipId={null}
-      title="Schema assistant"
-      hint="Views the entire schema. Changes only apply to the diagram after clicking “Apply”."
-      example="Example: “Add entity Order with a status field: draft, confirmed”"
-      placeholder="What to change in the schema…"
+      title={t("ai.schema")}
+      hint={t("ai.schemaHint")}
+      example={t("ai.schemaExample")}
+      placeholder={t("ai.schemaPlaceholder")}
       variant="column"
       initiallyOpen={false}
     />
@@ -356,6 +376,7 @@ export function AiChatPanel({ doc }: { doc: Ontology }) {
 }
 
 export function EntityAssistant({ doc, entity }: { doc: Ontology; entity: Entity }) {
+  const t = useT();
   return (
     <AssistantChat
       doc={doc}
@@ -363,10 +384,10 @@ export function EntityAssistant({ doc, entity }: { doc: Ontology; entity: Entity
       threadKey={`entity:${entity.id}`}
       entityId={entity.id}
       relationshipId={null}
-      title={`Entity assistant · ${entity.name}`}
-      hint={`Modifies only “${entity.name}”: name, fields, and relationships of this entity.`}
-      example="Example: “Add phone field and make it required”"
-      placeholder={`What to change in “${entity.name}”…`}
+      title={t("ai.entityTitle", { name: entity.name })}
+      hint={t("ai.entityHint", { name: entity.name })}
+      example={t("ai.entityExample")}
+      placeholder={t("ai.entityPlaceholder", { name: entity.name })}
       variant="card"
       initiallyOpen={false}
     />
@@ -386,6 +407,7 @@ export function RelationshipAssistant({
   fromName: string;
   toName: string;
 }) {
+  const t = useT();
   return (
     <AssistantChat
       doc={doc}
@@ -393,10 +415,10 @@ export function RelationshipAssistant({
       threadKey={`relationship:${relationshipId}`}
       entityId={null}
       relationshipId={relationshipId}
-      title={`Relationship assistant · ${name}`}
-      hint={`Modifies only relationship “${fromName} → ${toName}”: how they are related and cardinality on each side.`}
-      example="Example: “Relationship is optional, one entity can have many”"
-      placeholder={`What to change in relationship “${name}”…`}
+      title={t("ai.relationshipTitle", { name })}
+      hint={t("ai.relationshipHint", { from: fromName, to: toName })}
+      example={t("ai.relationshipExample")}
+      placeholder={t("ai.relationshipPlaceholder", { name })}
       variant="card"
       initiallyOpen={false}
     />

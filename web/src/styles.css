@@ -669,6 +669,66 @@ body {
   margin-top: 0;
 }
 
+.start-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.start-head h2 {
+  margin: 0;
+}
+
+.lang-switch {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.lang-switch button {
+  border-radius: 8px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lang-switch-bar button {
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: inherit;
+}
+
+.lang-switch-bar button:hover {
+  background: #334155;
+}
+
+.lang-switch-bar button[aria-pressed="true"] {
+  background: #2563eb;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+.lang-switch-screen button {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.lang-switch-screen button:hover {
+  border-color: #2563eb;
+}
+
+.lang-switch-screen button[aria-pressed="true"] {
+  background: #2563eb;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
 .template-grid {
   display: grid;
   gap: 12px;

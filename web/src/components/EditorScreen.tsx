@@ -7,6 +7,7 @@ import { AiChatPanel, DraftAssistant } from "./AiChatPanel";
 import { DetailPanel } from "./DetailPanel";
 import { nextPanelWidth } from "../lib/panelSize";
 import { useUnsavedLeaveGuard } from "../lib/unsavedChanges";
+import { useT } from "../i18n";
 import { useOntologyStore } from "../store";
 
 const LEFT_DEFAULT = 260;
@@ -18,6 +19,7 @@ const CENTER_MIN = 220;
 export function EditorScreen({ doc }: { doc: Ontology }) {
   useUnsavedLeaveGuard();
   const repairIds = useOntologyStore((s) => s.repairIds);
+  const t = useT();
   const gridRef = useRef<HTMLDivElement>(null);
   const [leftWidth, setLeftWidth] = useState(LEFT_DEFAULT);
   const [rightWidth, setRightWidth] = useState(RIGHT_DEFAULT);
@@ -50,7 +52,7 @@ export function EditorScreen({ doc }: { doc: Ontology }) {
         >
           <EntitySidebar doc={doc} />
           <PanelResize
-            label="Left panel width"
+            label={t("resize.left")}
             dragging={dragging === "left"}
             style={{ left: leftWidth - 4 }}
             onDragStart={() => setDragging("left")}
@@ -59,7 +61,7 @@ export function EditorScreen({ doc }: { doc: Ontology }) {
           />
           <GraphColumn doc={doc} />
           <PanelResize
-            label="Right panel width"
+            label={t("resize.right")}
             dragging={dragging === "right"}
             style={{ right: rightWidth - 4 }}
             onDragStart={() => setDragging("right")}

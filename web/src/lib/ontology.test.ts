@@ -181,6 +181,10 @@ describe("schema rejection", () => {
       to_max: "many",
     });
     const errors = validateOntology(doc);
-    expect(errors.some((e) => e.includes("missing"))).toBe(true);
+    expect(
+      errors.some(
+        (e) => e.code === "relationshipUnknownFrom" && e.value === "missing",
+      ),
+    ).toBe(true);
   });
 });

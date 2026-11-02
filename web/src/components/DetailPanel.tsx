@@ -6,6 +6,7 @@ import { CommaListInput } from "./CommaListInput";
 import { NotesField } from "./NotesField";
 import { EntityAttributesSection } from "./EntityAttributesSection";
 import { InfoTip } from "./InfoTip";
+import { useT } from "../i18n";
 
 export function DetailPanel({ doc }: { doc: Ontology }) {
   const selection = useOntologyStore((s) => s.selection);
@@ -14,6 +15,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   const removeRelationship = useOntologyStore((s) => s.removeRelationship);
   const renameRelationshipName = useOntologyStore((s) => s.renameRelationshipName);
   const setSelection = useOntologyStore((s) => s.setSelection);
+  const t = useT();
 
   const [nameDraft, setNameDraft] = useState("");
   const [uniqueIdDraft, setUniqueIdDraft] = useState("");
@@ -45,7 +47,10 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   if (!selection) {
     return (
       <aside className="detail">
-        <DetailHead title="Nothing selected" hint="Select an entity on the diagram or from the list on the left." />
+        <DetailHead
+          title={t("detail.nothingSelected")}
+          hint={t("detail.nothingSelectedHint")}
+        />
       </aside>
     );
   }
@@ -66,18 +71,18 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
     return (
       <aside className="detail">
         <DetailHead
-          title={`Selected: ${entity.name}`}
-          hint="Entity card on the diagram: name, fields, and relationships."
+          title={t("detail.selectedEntity", { name: entity.name })}
+          hint={t("detail.entityCardHint")}
         />
         <div className="detail-body">
           <EntityAssistant doc={doc} entity={entity} />
           <section className="card-block">
             <h3 className="heading-with-info">
-              Entity name
-              <InfoTip text="Label on the diagram. To change it, type a new name and click outside the field." />
+              {t("detail.entityName")}
+              <InfoTip text={t("detail.entityNameInfo")} />
             </h3>
             <div className="field">
-              <label htmlFor="entity-name">Name</label>
+              <label htmlFor="entity-name">{t("detail.name")}</label>
               <input
                 id="entity-name"
                 value={nameDraft}
@@ -95,10 +100,10 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
               />
             </div>
             <div className="field">
-              <label htmlFor="entity-unique-id">Unique identifier</label>
+              <label htmlFor="entity-unique-id">{t("detail.uniqueIdentifier")}</label>
               <input
                 id="entity-unique-id"
-                placeholder="Optional"
+                placeholder={t("detail.optional")}
                 value={uniqueIdDraft}
                 onChange={(e) => setUniqueIdDraft(e.target.value)}
                 onBlur={() => {
@@ -119,10 +124,12 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
               />
             </div>
             {entity.template_name && (
-              <p className="hint-text tech-only">Template word: {entity.template_name}</p>
+              <p className="hint-text tech-only">
+                {t("detail.templateWord", { name: entity.template_name })}
+              </p>
             )}
             <div className="field tech-only">
-              <label htmlFor="entity-aliases">Aliases (comma-separated)</label>
+              <label htmlFor="entity-aliases">{t("detail.aliases")}</label>
               <CommaListInput
                 id="entity-aliases"
                 value={entity.aliases ?? []}
@@ -138,7 +145,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
             </div>
             <NotesField
               id={`entity-notes-${entity.id}`}
-              label="Notes"
+              label={t("sidebar.notes")}
               labelClassName=""
               notes={entity.notes ?? ""}
               onCommit={(notes) =>
@@ -154,11 +161,11 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
 
           <section className="card-block">
             <h3 className="heading-with-info">
-              Connected to
-              <InfoTip text="New relationship: drag from one entity's handle to another on the diagram." />
+              {t("detail.connectedTo")}
+              <InfoTip text={t("detail.connectedToInfo")} />
             </h3>
             {related.length === 0 ? (
-              <p className="hint-text">No relationships.</p>
+              <p className="hint-text">{t("detail.noRelationships")}</p>
             ) : (
               <ul className="link-list">
                 {related.map((r) => {
@@ -197,7 +204,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
               setSelection(null);
             }}
           >
-            Delete entity
+            {t("detail.deleteEntity")}
           </button>
         </div>
       </aside>
@@ -212,8 +219,8 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
     return (
       <aside className="detail">
         <DetailHead
-          title="Selected: relationship"
-          hint="How two entities relate to each other."
+          title={t("detail.selectedRelationship")}
+          hint={t("detail.relationshipHint")}
         />
         <div className="detail-body">
           <RelationshipAssistant
@@ -228,7 +235,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
               {fromName} → {toName}
             </h3>
             <div className="field">
-              <label htmlFor="rel-name">Relationship label</label>
+              <label htmlFor="rel-name">{t("detail.relationshipLabel")}</label>
               <input
                 id="rel-name"
                 value={relNameDraft}
@@ -247,7 +254,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
             </div>
             <NotesField
               id={`rel-notes-${rel.id}`}
-              label="Notes"
+              label={t("sidebar.notes")}
               labelClassName=""
               notes={rel.notes ?? ""}
               onCommit={(notes) =>
@@ -266,7 +273,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
               className="list-item tech-only attr-remove"
               onClick={() => removeRelationship(rel.id)}
             >
-              Delete relationship
+              {t("detail.deleteRelationship")}
             </button>
           </section>
         </div>
@@ -278,9 +285,10 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
 }
 
 function DetailHead({ title, hint }: { title: string; hint: string }) {
+  const t = useT();
   return (
     <header className="detail-head">
-      <p className="detail-kicker">Details</p>
+      <p className="detail-kicker">{t("detail.kicker")}</p>
       <h2 className="heading-with-info">
         {title}
         <InfoTip text={hint} />

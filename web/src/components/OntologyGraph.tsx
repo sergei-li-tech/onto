@@ -18,6 +18,7 @@ import { layoutPositions } from "../lib/layoutElk";
 import { useOntologyStore } from "../store";
 import { EntityNode } from "./EntityNode";
 import { RelationshipEdge } from "./RelationshipEdge";
+import { useT } from "../i18n";
 
 const nodeTypes = { entity: EntityNode };
 const edgeTypes = { relationship: RelationshipEdge };
@@ -82,6 +83,7 @@ function buildFlowEdges(
 
 export function OntologyGraph({ doc }: { doc: Ontology }) {
   const setSelection = useOntologyStore((s) => s.setSelection);
+  const t = useT();
   const updateNodePosition = useOntologyStore((s) => s.updateNodePosition);
   const addRelationship = useOntologyStore((s) => s.addRelationship);
   const selection = useOntologyStore((s) => s.selection);
@@ -145,9 +147,9 @@ export function OntologyGraph({ doc }: { doc: Ontology }) {
     (connection: Connection) => {
       if (!connection.source || !connection.target) return;
       if (connection.source === connection.target) return;
-      addRelationship(connection.source, connection.target, "relates to");
+      addRelationship(connection.source, connection.target, t("graph.defaultRelationship"));
     },
-    [addRelationship],
+    [addRelationship, t],
   );
 
   return (

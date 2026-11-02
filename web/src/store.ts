@@ -6,9 +6,10 @@ import { slugIdFromText } from "./lib/ids";
 import { renameEntityInDocument } from "./lib/entityNames";
 import { relationshipIdFromName, renameRelationshipInDocument } from "./lib/relationships";
 import { copyFromTemplate } from "./lib/templates";
-import { validateOntology } from "./lib/validate";
+import { validateOntology, type ValidationIssue } from "./lib/validate";
 import { cloneOntology } from "./lib/yaml";
 import { autoLayoutEntities } from "./lib/layoutElk";
+import { t } from "./i18n";
 
 const MAX_UNDO = 40;
 
@@ -21,7 +22,7 @@ type Store = {
   fileName: string | null;
   selection: Selection;
   search: string;
-  validationErrors: string[];
+  validationErrors: ValidationIssue[];
   undoStack: Ontology[];
   redoStack: Ontology[];
 
@@ -55,7 +56,7 @@ function pushUndo(state: Store, prev: Ontology): Partial<Store> {
   return { undoStack: stack, redoStack: [] };
 }
 
-function revalidate(doc: Ontology | null): string[] {
+function revalidate(doc: Ontology | null): ValidationIssue[] {
   return doc ? validateOntology(doc) : [];
 }
 
@@ -263,7 +264,7 @@ export const useOntologyStore = create<Store>((set, get) => {
   addEntity: (flowCenter) => {
     const { doc } = get();
     if (!doc) return;
-    const name = "New entity";
+    const name = t("graph.newEntityName");
     const id = entityIdFromName(name, doc.entities);
     const placement = flowCenter ? nodePositionForFlowCenter(flowCenter) : null;
     get().patchDoc((d) => {

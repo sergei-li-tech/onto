@@ -1,5 +1,6 @@
 import type { Ontology } from "../types";
 import { entityMatchesSearch } from "../lib/entityNames";
+import { useT } from "../i18n";
 import { useOntologyStore } from "../store";
 import { CollapsibleSidebarSection } from "./CollapsibleSidebarSection";
 import { SideLists } from "./SideLists";
@@ -9,17 +10,18 @@ export function EntitySidebar({ doc }: { doc: Ontology }) {
   const setSearch = useOntologyStore((s) => s.setSearch);
   const selection = useOntologyStore((s) => s.selection);
   const setSelection = useOntologyStore((s) => s.setSelection);
+  const t = useT();
 
   const entities = doc.entities.filter((e) => entityMatchesSearch(e, search));
 
   return (
     <aside className="sidebar">
-      <CollapsibleSidebarSection title="Entities" defaultOpen>
+      <CollapsibleSidebarSection title={t("sidebar.entities")} defaultOpen>
         <div className="field">
-          <label htmlFor="search">Search</label>
+          <label htmlFor="search">{t("sidebar.search")}</label>
           <input
             id="search"
-            placeholder="Name, alias…"
+            placeholder={t("sidebar.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

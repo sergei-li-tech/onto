@@ -1,8 +1,19 @@
 import type { Ontology } from "../types";
 import type { OntologyOperation } from "./applyOperations";
 import type { DraftTurn } from "./draftHandoff";
+import type { Lang } from "../i18n";
 
 export type ChatScope = "global" | "entity" | "relationship" | "draft";
+
+export class AiChatError extends Error {
+  readonly status: number;
+
+  constructor(status: number) {
+    super(`HTTP ${status}`);
+    this.name = "AiChatError";
+    this.status = status;
+  }
+}
 
 export type ChatResponse = {
   assistant_message: string;
@@ -17,6 +28,7 @@ export async function sendOntologyChat(
   selectedEntityId: string | null,
   history: DraftTurn[] = [],
   selectedRelationshipId: string | null = null,
+  lang: Lang = "en",
 ): Promise<ChatResponse> {
   const body: Record<string, unknown> = {
     message,
@@ -24,6 +36,7 @@ export async function sendOntologyChat(
     scope,
     selected_entity_id: selectedEntityId,
     selected_relationship_id: selectedRelationshipId,
+    lang,
   };
   if (scope === "draft") body.history = history;
 
@@ -34,8 +47,7 @@ export async function sendOntologyChat(
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || `HTTP ${res.status}`);
+    throw new AiChatError(res.status);
   }
 
   return (await res.json()) as ChatResponse;

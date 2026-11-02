@@ -1,8 +1,6 @@
 import { useEffect } from "react";
 import { useOntologyStore } from "../store";
-
-export const LEAVE_CONFIRM =
-  "You have unsaved changes. Discard and leave?";
+import { t } from "../i18n";
 
 export function hasUnsavedChanges(): boolean {
   return useOntologyStore.getState().undoStack.length > 0;
@@ -10,7 +8,7 @@ export function hasUnsavedChanges(): boolean {
 
 export function confirmDiscardChanges(): boolean {
   if (!hasUnsavedChanges()) return true;
-  return window.confirm(LEAVE_CONFIRM);
+  return window.confirm(t("confirm.leave"));
 }
 
 export function useUnsavedLeaveGuard(): void {

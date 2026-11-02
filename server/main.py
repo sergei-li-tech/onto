@@ -58,7 +58,7 @@ Rules:
 
 Respond ONLY with JSON (no markdown):
 {
-  "assistant_message": "brief reply in English explaining changes or clarifying questions",
+  "assistant_message": "brief reply in the interface language explaining changes or clarifying questions",
   "operations": [ ... ]
 }
 
@@ -90,11 +90,70 @@ If asked to create or modify another entity — set operations: [] and explain t
 
 Respond ONLY with JSON (no markdown):
 {
-  "assistant_message": "brief reply in English",
+  "assistant_message": "brief reply in the interface language",
   "operations": [ ... ]
 }
 
 Operations format is the same as for schema assistant. Attribute types: string, integer, decimal, boolean, date, datetime, enum, ref."""
+
+
+LANGUAGE_NAMES = {"en": "English", "ru": "Russian", "ko": "Korean"}
+
+UI_TEXT = {
+    "en": {
+        "done": "Done.",
+        "more_details": "More details needed.",
+        "unrequested": "Properties not mentioned in the request were not added.",
+        "entity_scope": (
+            "Changes to other entities were discarded. "
+            "Use schema assistant for cross-entity edits."
+        ),
+        "relationship_scope": (
+            "Changes to other relationships were discarded. "
+            "Use schema assistant for cross-relationship edits."
+        ),
+    },
+    "ru": {
+        "done": "Готово.",
+        "more_details": "Нужны уточнения.",
+        "unrequested": "Свойства, не упомянутые в запросе, не добавлены.",
+        "entity_scope": (
+            "Изменения других сущностей отброшены. "
+            "Для правок нескольких сущностей используйте ассистента схемы."
+        ),
+        "relationship_scope": (
+            "Изменения других связей отброшены. "
+            "Для правок нескольких связей используйте ассистента схемы."
+        ),
+    },
+    "ko": {
+        "done": "완료했습니다.",
+        "more_details": "추가 설명이 필요합니다.",
+        "unrequested": "요청에 없는 속성은 추가하지 않았습니다.",
+        "entity_scope": (
+            "다른 엔터티의 변경은 버렸습니다. "
+            "여러 엔터티를 수정하려면 스키마 어시스턴트를 사용하세요."
+        ),
+        "relationship_scope": (
+            "다른 관계의 변경은 버렸습니다. "
+            "여러 관계를 수정하려면 스키마 어시스턴트를 사용하세요."
+        ),
+    },
+}
+
+
+def _ui_text(lang: str) -> dict[str, str]:
+    return UI_TEXT.get(lang, UI_TEXT["en"])
+
+
+def _language_instruction(lang: str, *, include_brief: bool = False) -> str:
+    name = LANGUAGE_NAMES.get(lang, LANGUAGE_NAMES["en"])
+    target = "assistant_message and brief" if include_brief else "assistant_message"
+    return (
+        f"\n\nInterface language: {name}. Write {target} in {name}."
+        " Entity, attribute, and relationship names and ids stay in English (latin):"
+        " they are data, not interface text."
+    )
 
 
 class DraftTurn(BaseModel):
@@ -110,6 +169,7 @@ class ChatRequest(BaseModel):
     selected_entity_id: str | None = None
     selected_relationship_id: str | None = None
     history: list[DraftTurn] = Field(default_factory=list)
+    lang: str = "en"
 
 
 class ChatResponse(BaseModel):
@@ -312,6 +372,8 @@ def chat(body: ChatRequest) -> ChatResponse:
     entity_scope = body.scope == "entity"
     relationship_scope = body.scope == "relationship"
     draft_scope = body.scope == "draft"
+    lang = body.lang if body.lang in LANGUAGE_NAMES else "en"
+    texts = _ui_text(lang)
     if entity_scope and not body.selected_entity_id:
         raise HTTPException(
             status_code=400, detail="selected_entity_id is required for entity assistant."
@@ -324,21 +386,23 @@ def chat(body: ChatRequest) -> ChatResponse:
 
     if draft_scope:
         context = _compact_ontology(body.ontology)
-        system_prompt = DRAFT_SYSTEM_PROMPT
+        system_prompt = DRAFT_SYSTEM_PROMPT + _language_instruction(
+            lang, include_brief=True
+        )
         scope_name = "draft"
     elif entity_scope:
         context = _entity_context(body.ontology, body.selected_entity_id or "")
-        system_prompt = ENTITY_SCOPE_PROMPT
+        system_prompt = ENTITY_SCOPE_PROMPT + _language_instruction(lang)
         scope_name = "entity"
     elif relationship_scope:
         context = relationship_context(
             body.ontology, body.selected_relationship_id or ""
         )
-        system_prompt = RELATIONSHIP_SCOPE_PROMPT
+        system_prompt = RELATIONSHIP_SCOPE_PROMPT + _language_instruction(lang)
         scope_name = "relationship"
     else:
         context = _compact_ontology(body.ontology)
-        system_prompt = SYSTEM_PROMPT
+        system_prompt = SYSTEM_PROMPT + _language_instruction(lang)
         scope_name = "global"
 
     user_payload = {
@@ -347,6 +411,7 @@ def chat(body: ChatRequest) -> ChatResponse:
         "selected_relationship_id": body.selected_relationship_id,
         "ontology": context,
         "user_message": body.message,
+        "lang": lang,
     }
     if draft_scope:
         user_payload["history"] = draft_history(
@@ -378,14 +443,14 @@ def chat(body: ChatRequest) -> ChatResponse:
         ) from exc
 
     if draft_scope:
-        normalized = normalize_draft_reply(parsed)
+        normalized = normalize_draft_reply(parsed, texts["more_details"])
         return ChatResponse(
             assistant_message=normalized["assistant_message"],
             operations=[],
             brief=normalized["brief"],
         )
 
-    assistant_message = str(parsed.get("assistant_message") or "Done.")
+    assistant_message = str(parsed.get("assistant_message") or texts["done"])
     operations = parsed.get("operations") or []
     if not isinstance(operations, list):
         operations = []
@@ -393,7 +458,7 @@ def chat(body: ChatRequest) -> ChatResponse:
     if scope_name == "global":
         pruned = _prune_unrequested_attributes(body.message, operations)
         if pruned != operations:
-            assistant_message = f"{assistant_message}\n\nProperties not mentioned in the request were not added."
+            assistant_message = f"{assistant_message}\n\n{texts['unrequested']}"
         operations = pruned
 
     if relationship_scope and body.selected_relationship_id:
@@ -402,8 +467,7 @@ def chat(body: ChatRequest) -> ChatResponse:
         )
         if scoped_links != operations:
             assistant_message = (
-                f"{assistant_message}\n\n"
-                "Changes to other relationships were discarded. Use schema assistant for cross-relationship edits."
+                f"{assistant_message}\n\n{texts['relationship_scope']}"
             )
         operations = scoped_links
 
@@ -420,7 +484,7 @@ def chat(body: ChatRequest) -> ChatResponse:
             and _in_entity_scope(op, body.selected_entity_id, own_rel_ids)
         ]
         if len(scoped) < len(operations):
-            assistant_message = f"{assistant_message}\n\nChanges to other entities were discarded. Use schema assistant for cross-entity edits."
+            assistant_message = f"{assistant_message}\n\n{texts['entity_scope']}"
         operations = scoped
 
     return ChatResponse(assistant_message=assistant_message, operations=operations)

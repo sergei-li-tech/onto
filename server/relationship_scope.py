@@ -22,7 +22,7 @@ If asked to edit entities or other relationships — set operations: [] and expl
 
 Respond ONLY with JSON (no markdown):
 {
-  "assistant_message": "brief reply in English",
+  "assistant_message": "brief reply in the interface language",
   "operations": [ ... ]
 }
 

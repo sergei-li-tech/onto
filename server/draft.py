@@ -45,11 +45,13 @@ def draft_history(turns: list[Any]) -> list[dict[str, str]]:
     return kept[-DRAFT_HISTORY_LIMIT:]
 
 
-def normalize_draft_reply(parsed: dict[str, Any]) -> dict[str, Any]:
+def normalize_draft_reply(
+    parsed: dict[str, Any], fallback_message: str = "More details needed."
+) -> dict[str, Any]:
     message = parsed.get("assistant_message")
     text = message.strip() if isinstance(message, str) else ""
     if not text:
-        text = "More details needed."
+        text = fallback_message
     brief_raw = parsed.get("brief")
     brief = brief_raw.strip() if isinstance(brief_raw, str) else ""
     return {"assistant_message": text, "brief": brief, "operations": []}

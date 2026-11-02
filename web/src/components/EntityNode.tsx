@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { useT } from "../i18n";
 
 export type EntityNodeData = {
   label: string;
@@ -11,6 +12,7 @@ export type EntityNodeData = {
 };
 
 function EntityNodeComponent({ data }: NodeProps<EntityNodeData>) {
+  const t = useT();
   return (
     <div className="entity-flow-node">
       <Handle
@@ -26,7 +28,7 @@ function EntityNodeComponent({ data }: NodeProps<EntityNodeData>) {
           type="button"
           className="entity-fields-toggle nodrag nopan"
           aria-expanded={data.expanded}
-          aria-label={data.expanded ? "Hide fields" : "Show fields"}
+          aria-label={data.expanded ? t("entityNode.hideFields") : t("entityNode.showFields")}
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => {
             event.stopPropagation();
@@ -37,19 +39,19 @@ function EntityNodeComponent({ data }: NodeProps<EntityNodeData>) {
         </button>
       </div>
       {data.uniqueIdentifier ? (
-        <p className="entity-node-unique-id" title="Unique identifier">
+        <p className="entity-node-unique-id" title={t("detail.uniqueIdentifier")}>
           {data.uniqueIdentifier}
         </p>
       ) : null}
       {data.aliases.length > 0 ? (
-        <p className="entity-node-aliases" title="Aliases">
+        <p className="entity-node-aliases" title={t("entityNode.aliases")}>
           {data.aliases.join(" · ")}
         </p>
       ) : null}
       {data.expanded ? (
         <ul className="entity-field-list nodrag nopan">
           {data.attributes.length === 0 ? (
-            <li className="entity-field-empty">No fields.</li>
+            <li className="entity-field-empty">{t("entityNode.noFields")}</li>
           ) : (
             data.attributes.map((attr) => (
               <li key={attr.id} className="entity-field-item">
