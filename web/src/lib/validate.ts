@@ -25,6 +25,8 @@ export type ValidationIssue = {
   attribute?: string;
   relationship?: string;
   action?: string;
+  /** States declared by the action, joined for the "add a status attribute" recipe. */
+  states?: string;
 };
 
 function entityEnumValues(entity: Entity): string[] | null {
@@ -120,9 +122,23 @@ export function validateOntology(doc: Ontology): ValidationIssue[] {
       continue;
     }
     const ent = doc.entities.find((x) => x.id === a.entity)!;
+    // A status enum is only meaningful for actions that declare state
+    // transitions: `from_states` (non-empty) or `to_state`. An action bound to
+    // an entity without states does not require the entity to have `status`.
+    const declaredStates = [...(a.from_states ?? [])];
+    if (a.to_state && !declaredStates.includes(a.to_state)) {
+      declaredStates.push(a.to_state);
+    }
     const states = entityEnumValues(ent);
     if (!states) {
-      errors.push({ code: "actionEntityNoStatus", action: a.id, value: a.entity });
+      if (declaredStates.length > 0) {
+        errors.push({
+          code: "actionEntityNoStatus",
+          action: a.id,
+          value: a.entity,
+          states: declaredStates.join(", "),
+        });
+      }
       continue;
     }
     for (const fs of a.from_states ?? []) {
