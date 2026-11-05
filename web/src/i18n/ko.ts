@@ -169,9 +169,7 @@ export const ko: Dict = {
   "validation.relationshipUnknownTo": "관계 {{id}}: 끝 엔터티 “{{value}}”을(를) 알 수 없습니다.",
   "validation.duplicateActionId": "액션 ID가 중복됩니다: {{id}}.",
   "validation.actionUnknownEntity": "액션 {{id}}: 알 수 없는 엔터티 “{{value}}”.",
-  "validation.actionEntityNoStatus": "액션 {{id}}: 상태({{states}})가 선언되었지만 엔터티 {{value}}에 status enum 속성이 없습니다. {{value}}에 id: status, type: enum, values: [{{states}}] 속성을 추가하거나, 액션에서 from_states/to_state를 제거하세요.",
-  "validation.actionUnknownFromState": "액션 {{id}}: 알 수 없는 상태 “{{value}}”.",
-  "validation.actionUnknownToState": "액션 {{id}}: 알 수 없는 대상 상태 “{{value}}”.",
+  "validation.actionStatesUnsupported": "액션 {{id}}: 상태는 지원되지 않습니다. 액션에서 from_states/to_state를 제거하세요.",
   "validation.invariant.duplicateInvariantId": "불변 조건 위반: 불변 조건 ID가 중복됩니다: {{id}}.",
   "validation.invariant.invariantDuplicateStatement": "불변 조건 위반: 불변 조건 {{id}}이(가) 이미 있는 문장을 반복합니다.",
 };

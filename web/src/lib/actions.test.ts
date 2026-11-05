@@ -20,8 +20,6 @@ const confirm: Action = {
   id: "confirm",
   entity: "order",
   name: "Old",
-  from_states: ["draft"],
-  to_state: "confirmed",
   requires_confirmation: true,
 };
 

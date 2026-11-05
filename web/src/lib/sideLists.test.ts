@@ -71,8 +71,6 @@ describe("action phrases", () => {
       id: "confirm",
       name: "Old",
       entity: "order",
-      from_states: ["draft"],
-      to_state: "confirmed",
       requires_confirmation: true,
     };
     const actions = editActionPhrase([current], "confirm", "Confirm");
@@ -80,7 +78,7 @@ describe("action phrases", () => {
       id: "action_confirm",
       name: "Confirm",
       entity: "order",
-      to_state: "confirmed",
+      requires_confirmation: true,
     });
   });
 });

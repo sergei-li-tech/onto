@@ -118,7 +118,7 @@
     },
     "entity": {
       "type": "object",
-      "description": "An entity used by an action that declares `from_states`/`to_state` must have an enum attribute with id `status`; otherwise the application rejects the document. Entities not used by state-changing actions may omit `status`. This cross-branch rule cannot be expressed in JSON Schema.",
+      "description": "A domain entity with typed attributes.",
       "required": ["id", "name", "attributes"],
       "additionalProperties": false,
       "properties": {
@@ -165,37 +165,20 @@
     },
     "action": {
       "type": "object",
-      "description": "A step on an entity. `entity` and `status` are conditional: when the action declares state transitions (`from_states` non-empty or `to_state` set), `entity` is required and that entity must declare an enum attribute id `status` covering these states (checked by the application, not by this schema). An action without states may reference an entity that has no `status`.",
+      "description": "A step on an entity. `entity` is optional: an action may be described without being bound to a particular entity.",
       "required": ["id", "name"],
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
         "entity": { "type": "string", "minLength": 1 },
         "name": { "type": "string", "minLength": 1 },
-        "from_states": {
-          "type": "array",
-          "items": { "type": "string", "minLength": 1 },
-          "minItems": 1
-        },
-        "to_state": { "type": "string", "minLength": 1 },
         "requires_confirmation": { "type": "boolean" },
         "rule": {
           "type": "string",
           "minLength": 1,
           "description": "Local execution condition: the action is blocked until the rule holds."
         }
-      },
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              { "required": ["from_states"] },
-              { "required": ["to_state"] }
-            ]
-          },
-          "then": { "required": ["entity"] }
-        }
-      ]
+      }
     },
     "invariant": {
       "type": "object",

@@ -47,8 +47,6 @@ export interface Action {
   id: string;
   name: string;
   entity?: string;
-  from_states?: string[];
-  to_state?: string;
   requires_confirmation?: boolean;
   /** Local execution condition: the action is blocked until it holds. Free text, no DSL. */
   rule?: string;

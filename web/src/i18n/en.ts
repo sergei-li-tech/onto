@@ -167,9 +167,7 @@ export const en = {
   "validation.relationshipUnknownTo": "Relationship {{id}}: unknown target entity “{{value}}”.",
   "validation.duplicateActionId": "Duplicate action id: {{id}}.",
   "validation.actionUnknownEntity": "Action {{id}}: unknown entity “{{value}}”.",
-  "validation.actionEntityNoStatus": "Action {{id}}: entity {{value}} declares states ({{states}}) but has no enum attribute status. Add to {{value}} an attribute id: status, type: enum, values: [{{states}}] — or remove from_states/to_state from the action.",
-  "validation.actionUnknownFromState": "Action {{id}}: unknown state “{{value}}”.",
-  "validation.actionUnknownToState": "Action {{id}}: unknown destination state “{{value}}”.",
+  "validation.actionStatesUnsupported": "Action {{id}}: states are not supported. Remove from_states/to_state from the action.",
   "validation.invariant.duplicateInvariantId": "Invariant violated: duplicate invariant id {{id}}.",
   "validation.invariant.invariantDuplicateStatement": "Invariant violated: invariant {{id}} repeats a statement that already exists.",
 };

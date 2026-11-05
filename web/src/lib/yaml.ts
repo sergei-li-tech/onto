@@ -176,8 +176,6 @@ function parseRelationship(raw: unknown): Relationship {
 function actionToPlain(a: Action): Record<string, unknown> {
   const out: Record<string, unknown> = { id: a.id, name: a.name };
   if (a.entity) out.entity = a.entity;
-  if (a.from_states) out.from_states = a.from_states;
-  if (a.to_state) out.to_state = a.to_state;
   if (a.requires_confirmation !== undefined) out.requires_confirmation = a.requires_confirmation;
   if (a.rule?.trim()) out.rule = a.rule;
   return out;
@@ -185,19 +183,15 @@ function actionToPlain(a: Action): Record<string, unknown> {
 
 function parseAction(raw: unknown): Action {
   if (!isMap(raw)) throw new Error("Action must be an object");
-  const action: Action = {
-    id: asString(raw.get("id"), "actions.id"),
-    name: asString(raw.get("name"), "actions.name"),
-  };
+  // Keep every key from the file, including legacy `from_states`/`to_state`:
+  // the schema rejects unknown action properties, so a file that still
+  // declares states fails validation with a clear message instead of loading
+  // with those fields silently dropped.
+  const action = raw.toJSON() as Record<string, unknown> as unknown as Action;
+  action.id = asString(raw.get("id"), "actions.id");
+  action.name = asString(raw.get("name"), "actions.name");
   const entity = raw.get("entity");
   if (entity !== undefined) action.entity = asString(entity, "actions.entity");
-  const fromStates = raw.get("from_states");
-  if (fromStates !== undefined) {
-    if (!isSeq(fromStates)) throw new Error("actions.from_states must be a list");
-    action.from_states = fromStates.toJSON() as string[];
-  }
-  const toState = raw.get("to_state");
-  if (toState !== undefined) action.to_state = asString(toState, "actions.to_state");
   const confirm = raw.get("requires_confirmation");
   if (confirm !== undefined) {
     action.requires_confirmation = asBool(confirm, "actions.requires_confirmation");

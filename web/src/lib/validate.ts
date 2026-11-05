@@ -1,7 +1,7 @@
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import schema from "../../../schema/ontology.schema.json";
-import type { Entity, Ontology } from "../types";
+import type { Ontology } from "../types";
 
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
@@ -25,14 +25,13 @@ export type ValidationIssue = {
   attribute?: string;
   relationship?: string;
   action?: string;
-  /** States declared by the action, joined for the "add a status attribute" recipe. */
-  states?: string;
 };
 
-function entityEnumValues(entity: Entity): string[] | null {
-  const status = entity.attributes.find((a) => a.id === "status" && a.type === "enum");
-  return status?.values ?? null;
-}
+/**
+ * Action properties removed from the model. Kept in the list so a legacy file
+ * fails with an explanation instead of a generic "unexpected property".
+ */
+const REMOVED_ACTION_FIELDS = ["from_states", "to_state"] as const;
 
 export function validateOntology(doc: Ontology): ValidationIssue[] {
   const errors: ValidationIssue[] = [];
@@ -47,6 +46,16 @@ export function validateOntology(doc: Ontology): ValidationIssue[] {
           : typeof params.additionalProperty === "string"
             ? params.additionalProperty
             : undefined;
+      // Removed state fields on an action are reported by
+      // `actionStatesUnsupported` below with a clearer message.
+      if (
+        e.keyword === "additionalProperties" &&
+        field !== undefined &&
+        (REMOVED_ACTION_FIELDS as readonly string[]).includes(field) &&
+        /^\/actions\/\d+$/.test(e.instancePath)
+      ) {
+        continue;
+      }
       errors.push({
         code: "schema",
         keyword: e.keyword,
@@ -116,38 +125,24 @@ export function validateOntology(doc: Ontology): ValidationIssue[] {
       errors.push({ code: "duplicateActionId", action: a.id, value: a.id });
     }
     actionIds.add(a.id);
+    // Actions no longer carry lifecycle states. Parsed legacy keys are kept on
+    // the object (see parseAction) so they can be reported here instead of
+    // being dropped silently.
+    const legacyFields = a as unknown as Record<string, unknown>;
+    const stateFields = REMOVED_ACTION_FIELDS.filter(
+      (field) => legacyFields[field] !== undefined,
+    );
+    if (stateFields.length > 0) {
+      errors.push({
+        code: "actionStatesUnsupported",
+        action: a.id,
+        value: stateFields.join(", "),
+      });
+    }
     if (!a.entity) continue;
     if (!entityIds.has(a.entity)) {
       errors.push({ code: "actionUnknownEntity", action: a.id, value: a.entity });
       continue;
-    }
-    const ent = doc.entities.find((x) => x.id === a.entity)!;
-    // A status enum is only meaningful for actions that declare state
-    // transitions: `from_states` (non-empty) or `to_state`. An action bound to
-    // an entity without states does not require the entity to have `status`.
-    const declaredStates = [...(a.from_states ?? [])];
-    if (a.to_state && !declaredStates.includes(a.to_state)) {
-      declaredStates.push(a.to_state);
-    }
-    const states = entityEnumValues(ent);
-    if (!states) {
-      if (declaredStates.length > 0) {
-        errors.push({
-          code: "actionEntityNoStatus",
-          action: a.id,
-          value: a.entity,
-          states: declaredStates.join(", "),
-        });
-      }
-      continue;
-    }
-    for (const fs of a.from_states ?? []) {
-      if (!states.includes(fs)) {
-        errors.push({ code: "actionUnknownFromState", action: a.id, value: fs });
-      }
-    }
-    if (a.to_state && !states.includes(a.to_state)) {
-      errors.push({ code: "actionUnknownToState", action: a.id, value: a.to_state });
     }
   }
 
