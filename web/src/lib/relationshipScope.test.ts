@@ -11,7 +11,7 @@ function docWith(relationships: Relationship[]): Ontology {
     entities: [],
     relationships,
     actions: [],
-    rules: [],
+    invariants: [],
     open_questions: [],
     out_of_scope: [],
   };

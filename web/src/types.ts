@@ -50,9 +50,12 @@ export interface Action {
   from_states?: string[];
   to_state?: string;
   requires_confirmation?: boolean;
+  /** Local execution condition: the action is blocked until it holds. Free text, no DSL. */
+  rule?: string;
 }
 
-export interface Rule {
+/** Always-true assertion checked after any action (formerly `rules`). */
+export interface Invariant {
   id: string;
   statement: string;
 }
@@ -82,7 +85,7 @@ export interface Ontology {
   entities: Entity[];
   relationships: Relationship[];
   actions: Action[];
-  rules: Rule[];
+  invariants: Invariant[];
   open_questions: string[];
   out_of_scope: string[];
   layout?: Layout;
@@ -92,7 +95,7 @@ export type Selection =
   | { kind: "entity"; id: string }
   | { kind: "relationship"; id: string }
   | { kind: "action"; id: string }
-  | { kind: "rule"; id: string }
+  | { kind: "invariant"; id: string }
   | null;
 
 export type TemplateId = "generic";

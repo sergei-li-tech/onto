@@ -184,7 +184,7 @@ def _compact_ontology(doc: dict[str, Any]) -> dict[str, Any]:
         "notes": doc.get("notes"),
         "entities": doc.get("entities", []),
         "relationships": doc.get("relationships", []),
-        "rules": doc.get("rules", []),
+        "invariants": doc.get("invariants", doc.get("rules", [])),
         "open_questions": doc.get("open_questions", []),
     }
 

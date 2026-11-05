@@ -10,7 +10,7 @@
     "entities",
     "relationships",
     "actions",
-    "rules",
+    "invariants",
     "open_questions",
     "out_of_scope"
   ],
@@ -45,9 +45,16 @@
       "type": "array",
       "items": { "$ref": "#/$defs/action" }
     },
+    "invariants": {
+      "type": "array",
+      "description": "Always-true assertions, re-checked after any action.",
+      "items": { "$ref": "#/$defs/invariant" }
+    },
     "rules": {
       "type": "array",
-      "items": { "$ref": "#/$defs/rule" }
+      "deprecated": true,
+      "description": "Legacy name of `invariants`; read-only compatibility. Files are saved with the `invariants` key.",
+      "items": { "$ref": "#/$defs/invariant" }
     },
     "open_questions": {
       "type": "array",
@@ -164,11 +171,17 @@
           "minItems": 1
         },
         "to_state": { "type": "string", "minLength": 1 },
-        "requires_confirmation": { "type": "boolean" }
+        "requires_confirmation": { "type": "boolean" },
+        "rule": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Local execution condition: the action is blocked until the rule holds."
+        }
       }
     },
-    "rule": {
+    "invariant": {
       "type": "object",
+      "description": "Always-true assertion, checked after any action.",
       "required": ["id", "statement"],
       "additionalProperties": false,
       "properties": {

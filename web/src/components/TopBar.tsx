@@ -10,6 +10,7 @@ export function TopBar() {
   const fileName = useOntologyStore((s) => s.fileName);
   const fileHandle = useOntologyStore((s) => s.fileHandle);
   const validationErrors = useOntologyStore((s) => s.validationErrors);
+  const invariantIssues = useOntologyStore((s) => s.invariantViolations);
   const undo = useOntologyStore((s) => s.undo);
   const redo = useOntologyStore((s) => s.redo);
   const runAutoLayout = useOntologyStore((s) => s.runAutoLayout);
@@ -20,6 +21,7 @@ export function TopBar() {
 
   const canSave = validationErrors.length === 0;
   const errorMessages = formatValidationIssues(validationErrors, t);
+  const invariantMessages = formatValidationIssues(invariantIssues, t);
 
   async function saveAsClient() {
     if (!doc) return;
@@ -74,6 +76,13 @@ export function TopBar() {
       {validationErrors.length > 0 && (
         <div className="errors tech-only">
           {errorMessages.map((message) => (
+            <div key={message}>{message}</div>
+          ))}
+        </div>
+      )}
+      {invariantIssues.length > 0 && (
+        <div className="errors invariant-errors">
+          {invariantMessages.map((message) => (
             <div key={message}>{message}</div>
           ))}
         </div>

@@ -3,11 +3,15 @@ import type {
   Action,
   Attribute,
   Entity,
+  Invariant,
   Layout,
   Ontology,
   Relationship,
-  Rule,
 } from "../types";
+
+export const INVARIANTS_KEY = "invariants";
+/** Key used by files written before the `rules` → `invariants` rename. */
+export const LEGACY_RULES_KEY = "rules";
 
 const TOP_LEVEL_ORDER = [
   "domain",
@@ -19,7 +23,7 @@ const TOP_LEVEL_ORDER = [
   "entities",
   "relationships",
   "actions",
-  "rules",
+  "invariants",
   "open_questions",
   "out_of_scope",
   "layout",
@@ -84,7 +88,7 @@ export function serializeOntology(doc: Ontology): string {
     entities: doc.entities.map(entityToPlain),
     relationships: doc.relationships.map(relationshipToPlain),
     actions: doc.actions.map(actionToPlain),
-    rules: doc.rules,
+    invariants: doc.invariants,
     open_questions: doc.open_questions,
     out_of_scope: doc.out_of_scope,
   };
@@ -169,6 +173,7 @@ function actionToPlain(a: Action): Record<string, unknown> {
   if (a.from_states) out.from_states = a.from_states;
   if (a.to_state) out.to_state = a.to_state;
   if (a.requires_confirmation !== undefined) out.requires_confirmation = a.requires_confirmation;
+  if (a.rule?.trim()) out.rule = a.rule;
   return out;
 }
 
@@ -191,14 +196,16 @@ function parseAction(raw: unknown): Action {
   if (confirm !== undefined) {
     action.requires_confirmation = asBool(confirm, "actions.requires_confirmation");
   }
+  const rule = raw.get("rule");
+  if (rule !== undefined) action.rule = asString(rule, "actions.rule");
   return action;
 }
 
-function parseRule(raw: unknown): Rule {
-  if (!isMap(raw)) throw new Error("Rule must be an object");
+function parseInvariant(raw: unknown): Invariant {
+  if (!isMap(raw)) throw new Error("Invariant must be an object");
   return {
-    id: asString(raw.get("id"), "rules.id"),
-    statement: asString(raw.get("statement"), "rules.statement"),
+    id: asString(raw.get("id"), "invariants.id"),
+    statement: asString(raw.get("statement"), "invariants.statement"),
   };
 }
 
@@ -219,14 +226,16 @@ export function parseOntologyYaml(text: string): Ontology {
   const entitiesRaw = root.get("entities");
   const relsRaw = root.get("relationships");
   const actionsRaw = root.get("actions");
-  const rulesRaw = root.get("rules");
+  // Legacy files written before the rename keep their list under `rules`.
+  const invariantsRaw =
+    root.get(INVARIANTS_KEY) ?? root.get(LEGACY_RULES_KEY);
   const oq = root.get("open_questions");
   const oos = root.get("out_of_scope");
 
   if (!isSeq(entitiesRaw)) throw new Error("entities must be a list");
   if (!isSeq(relsRaw)) throw new Error("relationships must be a list");
   if (!isSeq(actionsRaw)) throw new Error("actions must be a list");
-  if (!isSeq(rulesRaw)) throw new Error("rules must be a list");
+  if (!isSeq(invariantsRaw)) throw new Error("invariants must be a list");
   if (!isSeq(oq)) throw new Error("open_questions must be a list");
   if (!isSeq(oos)) throw new Error("out_of_scope must be a list");
 
@@ -256,7 +265,7 @@ export function parseOntologyYaml(text: string): Ontology {
     entities: entitiesRaw.items.map(parseEntity),
     relationships: relsRaw.items.map(parseRelationship),
     actions: actionsRaw.items.map(parseAction),
-    rules: rulesRaw.items.map(parseRule),
+    invariants: invariantsRaw.items.map(parseInvariant),
     open_questions: oq.toJSON() as string[],
     out_of_scope: oos.toJSON() as string[],
     layout,

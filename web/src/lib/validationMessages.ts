@@ -20,6 +20,12 @@ export function formatValidationIssue(
   issue: ValidationIssue,
   translate: TFunction = defaultTranslate,
 ): string {
+  if (issue.kind === "invariant") {
+    return translate(`validation.invariant.${issue.code}`, {
+      id: issue.value ?? "",
+    });
+  }
+
   if (issue.code === "schema") {
     const key =
       issue.keyword && SCHEMA_KEYWORDS.has(issue.keyword)

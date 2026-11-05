@@ -4,6 +4,16 @@ PoC: English domain model editor for screen-sharing with a business stakeholder.
 
 Non-production: local FastAPI proxy for chat assistant; no database.
 
+## Model Terms
+
+- **Entities, fields, relationships** — the structure of the domain.
+- **Invariants** (`invariants:` in YAML) — claims that are always true and are re-checked after any action. They sit where the former `rules` section used to be. A broken invariant is reported as a separate "invariant violated" message and is not mixed with schema errors.
+- **Actions** (`actions:`) — domain actions. Each action has an optional free-text **Rule** field: the local execution condition that must hold before the action is allowed. It is plain text, with no DSL or executable logic.
+
+### Reading old files
+
+Files written before the `rules` → `invariants` rename keep their list under `rules`. They open without loss: the whole list is lifted into `invariants` with the same order and text, and the next save writes the new `invariants` key. The legacy key stays accepted by the JSON schema for reference, but the editor never writes it.
+
 ## Template
 
 Single starting file: [templates/generic.yaml](templates/generic.yaml) — one entity **Client** without fields; attributes are added during the call (**+ Field** or assistant).
@@ -47,8 +57,8 @@ Open the Vite URL (typically `http://localhost:5173`). **Draft** suggests entiti
 ## Call Scenario
 
 1. Select a template or open an existing YAML file.
-2. Refine entities, fields ("Fields" block, **+ Field** button), relationships on diagram, and rules.
-3. Raw call notes go into the **Notes** field on the left. Rules, actions, questions, or out of scope items are added line by line in their respective lists.
+2. Refine entities, fields ("Fields" block, **+ Field** button), relationships on diagram, and invariants.
+3. Raw call notes go into the **Notes** field on the left. Invariants, actions (with their local rule), questions, or out of scope items are added line by line in their respective lists. Selecting an action opens its card on the right with the **Rule** field.
 4. If the stakeholder calls an entity differently (e.g. "lead" instead of "client"): type the word into "Entity name" and blur the field. `id` is derived from the new name; former name is preserved in `template_name`.
 5. **Save as…** — available when there are no validation errors (error list at top).
 
@@ -62,7 +72,7 @@ cd onto/web && npm test
 uv run pytest
 ```
 
-Validates template, key ordering during serialization, `based_on`, and business rename.
+Validates template, key ordering during serialization, `based_on`, business rename, legacy `rules` → `invariants` reading, action rule round-trip, and the separate invariant-violation report.
 
 ## Cost
 

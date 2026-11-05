@@ -1,4 +1,4 @@
-import type { Action, Rule } from "../types";
+import type { Action, Invariant } from "../types";
 import { actionIdFromName } from "./actions";
 import { slugIdFromText } from "./ids";
 
@@ -19,8 +19,8 @@ export function removePhrase(items: string[], index: number): string[] {
   return items.filter((_, i) => i !== index);
 }
 
-export function ruleIdFromStatement(statement: string, taken: string[]): string {
-  const base = slugIdFromText(statement, "rule");
+export function invariantIdFromStatement(statement: string, taken: string[]): string {
+  const base = slugIdFromText(statement, "invariant");
   let id = base;
   let suffix = 2;
   while (taken.includes(id)) {
@@ -30,29 +30,35 @@ export function ruleIdFromStatement(statement: string, taken: string[]): string 
   return id;
 }
 
-export function addRulePhrase(rules: Rule[], phrase: string): Rule[] {
+export function addInvariantPhrase(invariants: Invariant[], phrase: string): Invariant[] {
   const statement = phrase.trim();
-  if (!statement) return rules;
-  const id = ruleIdFromStatement(
+  if (!statement) return invariants;
+  const id = invariantIdFromStatement(
     statement,
-    rules.map((rule) => rule.id),
+    invariants.map((item) => item.id),
   );
-  return [...rules, { id, statement }];
+  return [...invariants, { id, statement }];
 }
 
-export function editRulePhrase(rules: Rule[], id: string, phrase: string): Rule[] {
+export function editInvariantPhrase(
+  invariants: Invariant[],
+  id: string,
+  phrase: string,
+): Invariant[] {
   const statement = phrase.trim();
-  const current = rules.find((rule) => rule.id === id);
-  if (!current || !statement || statement === current.statement) return rules;
-  const nextId = ruleIdFromStatement(
+  const current = invariants.find((item) => item.id === id);
+  if (!current || !statement || statement === current.statement) return invariants;
+  const nextId = invariantIdFromStatement(
     statement,
-    rules.filter((rule) => rule.id !== id).map((rule) => rule.id),
+    invariants.filter((item) => item.id !== id).map((item) => item.id),
   );
-  return rules.map((rule) => (rule.id === id ? { id: nextId, statement } : rule));
+  return invariants.map((item) =>
+    item.id === id ? { id: nextId, statement } : item,
+  );
 }
 
-export function removeRule(rules: Rule[], id: string): Rule[] {
-  return rules.filter((rule) => rule.id !== id);
+export function removeInvariant(invariants: Invariant[], id: string): Invariant[] {
+  return invariants.filter((item) => item.id !== id);
 }
 
 export function addActionPhrase(actions: Action[], phrase: string): Action[] {
@@ -80,4 +86,16 @@ export function editActionPhrase(actions: Action[], id: string, phrase: string):
 
 export function removeAction(actions: Action[], id: string): Action[] {
   return actions.filter((action) => action.id !== id);
+}
+
+/** Set or clear the local execution rule of an action. */
+export function setActionRule(actions: Action[], id: string, rule: string): Action[] {
+  const text = rule.trim();
+  return actions.map((action) => {
+    if (action.id !== id) return action;
+    const next = { ...action };
+    if (text) next.rule = text;
+    else delete next.rule;
+    return next;
+  });
 }

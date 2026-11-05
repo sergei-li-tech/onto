@@ -10,7 +10,7 @@ function docWith(actions: Action[]): Ontology {
     entities: [],
     relationships: [],
     actions,
-    rules: [],
+    invariants: [],
     open_questions: [],
     out_of_scope: [],
   };
