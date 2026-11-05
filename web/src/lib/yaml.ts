@@ -13,7 +13,12 @@ export const INVARIANTS_KEY = "invariants";
 /** Key used by files written before the `rules` → `invariants` rename. */
 export const LEGACY_RULES_KEY = "rules";
 
+/** Canonical address of the schema the editor generates and validates against. */
+export const ONTOLOGY_SCHEMA_URL =
+  "https://raw.githubusercontent.com/sergei-li-tech/onto/main/schema/ontology.schema.json";
+
 const TOP_LEVEL_ORDER = [
+  "$schema",
   "domain",
   "version",
   "based_on",
@@ -82,6 +87,7 @@ function attributeToPlain(a: Attribute): Record<string, unknown> {
 
 export function serializeOntology(doc: Ontology): string {
   const plain: Record<string, unknown> = {
+    $schema: ONTOLOGY_SCHEMA_URL,
     domain: doc.domain,
     version: doc.version,
     notes: doc.notes,
