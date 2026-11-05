@@ -10,7 +10,7 @@ import {
 import { addActionPhrase } from "./sideLists";
 import { copyFromTemplate } from "./templates";
 import { validateOntology } from "./validate";
-import { parseOntologyYaml, serializeOntology } from "./yaml";
+import { ONTOLOGY_SCHEMA_URL, parseOntologyYaml, serializeOntology } from "./yaml";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const templatesDir = join(here, "../../../templates");
@@ -44,10 +44,24 @@ describe("yaml round-trip", () => {
     const doc = parseOntologyYaml(text);
     const out = serializeOntology(doc);
     const lines = out.split("\n").filter((l) => l && !l.startsWith(" "));
-    expect(lines[0]).toBe("domain: default");
-    expect(lines[1]).toBe("version: 1.0.0");
+    expect(lines[0]).toBe(`$schema: ${ONTOLOGY_SCHEMA_URL}`);
+    expect(lines[1]).toBe("domain: default");
+    expect(lines[2]).toBe("version: 1.0.0");
     expect(out).toContain("notes:");
     expect(out.indexOf("entities:")).toBeLessThan(out.indexOf("layout:"));
+  });
+
+  it("points $schema at the published schema with a literal raw URL", () => {
+    const text = readFileSync(join(templatesDir, "generic.yaml"), "utf8");
+    const doc = parseOntologyYaml(text);
+    expect(ONTOLOGY_SCHEMA_URL).toBe(
+      "https://raw.githubusercontent.com/sergei-li-tech/onto/main/schema/ontology.schema.json",
+    );
+    const out = serializeOntology(doc);
+    expect(out.split("\n")[0]).toBe(
+      `$schema: https://raw.githubusercontent.com/sergei-li-tech/onto/main/schema/ontology.schema.json`,
+    );
+    expect(validateOntology(parseOntologyYaml(out))).toEqual([]);
   });
 });
 

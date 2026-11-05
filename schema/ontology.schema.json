@@ -16,6 +16,11 @@
   ],
   "additionalProperties": false,
   "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Address of this JSON Schema: the published copy on branch main."
+    },
     "domain": { "type": "string", "minLength": 1 },
     "version": {
       "type": "string",

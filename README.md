@@ -2,6 +2,8 @@
 
 Interactive domain model editor. **Work output is a single YAML file**, validated against [schema/ontology.schema.json](schema/ontology.schema.json).
 
+Saved files start with a `$schema` key pointing at the published schema the editor validates against: `https://raw.githubusercontent.com/sergei-li-tech/onto/main/schema/ontology.schema.json` (the file in this repository, served from `main`).
+
 Includes a local FastAPI proxy for AI assistant features (optional) and an interactive web UI.
 
 ## Model Terms
