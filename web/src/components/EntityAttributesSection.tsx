@@ -143,13 +143,13 @@ export function EntityAttributesSection({ doc, entity, patchEntity }: Props) {
           {attr.type === "enum" && (
             <div className="field">
               <div className="heading-with-info">
-                <label>{t("attributes.states")}</label>
-                <InfoTip text={t("attributes.statesInfo")} />
+                <label>{t("attributes.values")}</label>
+                <InfoTip text={t("attributes.valuesInfo")} />
               </div>
               <CommaListInput
                 value={attr.values ?? []}
                 onCommit={(values) => updateAttribute(attr.id, { values })}
-                placeholder={t("attributes.statesPlaceholder")}
+                placeholder={t("attributes.valuesPlaceholder")}
               />
             </div>
           )}
