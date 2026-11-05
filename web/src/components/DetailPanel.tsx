@@ -6,6 +6,7 @@ import { CommaListInput } from "./CommaListInput";
 import { NotesField } from "./NotesField";
 import { EntityAttributesSection } from "./EntityAttributesSection";
 import { InfoTip } from "./InfoTip";
+import { editActionPhrase, setActionRule } from "../lib/sideLists";
 import { useT } from "../i18n";
 
 export function DetailPanel({ doc }: { doc: Ontology }) {
@@ -31,6 +32,21 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   const selectedRelName = selectedRelId
     ? doc.relationships.find((r) => r.id === selectedRelId)?.name
     : undefined;
+
+  const selectedActionId = selection?.kind === "action" ? selection.id : null;
+  const selectedAction = selectedActionId
+    ? doc.actions.find((a) => a.id === selectedActionId)
+    : undefined;
+  const [actionNameDraft, setActionNameDraft] = useState("");
+  const [ruleDraft, setRuleDraft] = useState("");
+
+  useEffect(() => {
+    setActionNameDraft(selectedAction?.name ?? "");
+  }, [selectedActionId, selectedAction?.name]);
+
+  useEffect(() => {
+    setRuleDraft(selectedAction?.rule ?? "");
+  }, [selectedActionId, selectedAction?.rule]);
 
   useEffect(() => {
     setNameDraft(selectedEntity?.name ?? "");
@@ -206,6 +222,87 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
           >
             {t("detail.deleteEntity")}
           </button>
+        </div>
+      </aside>
+    );
+  }
+
+  if (selection.kind === "action" && selectedAction) {
+    const action = selectedAction;
+    const entityName = action.entity
+      ? (doc.entities.find((e) => e.id === action.entity)?.name ?? action.entity)
+      : null;
+
+    function commitActionName() {
+      const trimmed = actionNameDraft.trim();
+      if (!trimmed || trimmed === action.name) {
+        setActionNameDraft(action.name);
+        return;
+      }
+      let nextId = action.id;
+      patchDoc((d) => {
+        const actions = editActionPhrase(d.actions, action.id, trimmed);
+        nextId = actions.find((item) => item.name === trimmed)?.id ?? action.id;
+        return { ...d, actions };
+      });
+      if (nextId !== action.id) setSelection({ kind: "action", id: nextId });
+    }
+
+    return (
+      <aside className="detail">
+        <DetailHead
+          title={t("detail.selectedAction", { name: action.name })}
+          hint={t("detail.actionCardHint")}
+        />
+        <div className="detail-body">
+          <section className="card-block">
+            <h3 className="heading-with-info">
+              {t("detail.actionName")}
+              <InfoTip text={t("detail.actionNameInfo")} />
+            </h3>
+            <div className="field">
+              <label htmlFor="action-name">{t("detail.name")}</label>
+              <input
+                id="action-name"
+                value={actionNameDraft}
+                onChange={(e) => setActionNameDraft(e.target.value)}
+                onBlur={commitActionName}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                }}
+              />
+            </div>
+            {entityName ? (
+              <p className="hint-text tech-only">
+                {t("detail.actionEntity", { name: entityName })}
+              </p>
+            ) : null}
+            <div className="field">
+              <label className="heading-with-info" htmlFor={`action-rule-${action.id}`}>
+                {t("detail.rule")}
+                <InfoTip text={t("detail.ruleInfo")} />
+              </label>
+              <textarea
+                id={`action-rule-${action.id}`}
+                rows={2}
+                placeholder={t("detail.rulePlaceholder")}
+                value={ruleDraft}
+                onChange={(e) => setRuleDraft(e.target.value)}
+                onBlur={() => {
+                  const trimmed = ruleDraft.trim();
+                  if (trimmed === (action.rule ?? "")) {
+                    setRuleDraft(action.rule ?? "");
+                    return;
+                  }
+                  patchDoc((d) => ({
+                    ...d,
+                    actions: setActionRule(d.actions, action.id, trimmed),
+                  }));
+                }}
+              />
+              <p className="hint-text">{t("detail.ruleHint")}</p>
+            </div>
+          </section>
         </div>
       </aside>
     );

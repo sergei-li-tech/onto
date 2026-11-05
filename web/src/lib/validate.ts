@@ -13,6 +13,8 @@ const validateSchema = ajv.compile(schema);
  * the selected language, so validation stays language-independent.
  */
 export type ValidationIssue = {
+  /** Issue class. `invariant` issues are reported separately from schema checks. */
+  kind?: "invariant";
   code: string;
   keyword?: string;
   path?: string;
@@ -133,13 +135,29 @@ export function validateOntology(doc: Ontology): ValidationIssue[] {
     }
   }
 
-  const ruleIds = new Set<string>();
-  for (const r of doc.rules) {
-    if (ruleIds.has(r.id)) {
-      errors.push({ code: "duplicateRuleId", value: r.id });
+  const invariantIds = new Set<string>();
+  const invariantStatements = new Set<string>();
+  for (const r of doc.invariants) {
+    if (invariantIds.has(r.id)) {
+      errors.push({ kind: "invariant", code: "duplicateInvariantId", value: r.id });
     }
-    ruleIds.add(r.id);
+    invariantIds.add(r.id);
+    const statement = r.statement.trim();
+    if (statement && invariantStatements.has(statement)) {
+      errors.push({ kind: "invariant", code: "invariantDuplicateStatement", value: r.id });
+    }
+    invariantStatements.add(statement);
   }
 
   return errors;
+}
+
+/** Invariant violations are reported on their own, never mixed with schema errors. */
+export function invariantViolations(issues: ValidationIssue[]): ValidationIssue[] {
+  return issues.filter((issue) => issue.kind === "invariant");
+}
+
+/** Blocking issues: everything except invariant violations. */
+export function blockingIssues(issues: ValidationIssue[]): ValidationIssue[] {
+  return issues.filter((issue) => issue.kind !== "invariant");
 }

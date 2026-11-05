@@ -9,7 +9,7 @@ const base: Ontology = {
   entities: [{ id: "a", name: "Alpha", attributes: [{ id: "id", type: "string", name: "Name" }] }],
   relationships: [],
   actions: [],
-  rules: [],
+  invariants: [],
   open_questions: [],
   out_of_scope: [],
 };

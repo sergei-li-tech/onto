@@ -6,7 +6,7 @@ import { slugIdFromText } from "./lib/ids";
 import { renameEntityInDocument } from "./lib/entityNames";
 import { relationshipIdFromName, renameRelationshipInDocument } from "./lib/relationships";
 import { copyFromTemplate } from "./lib/templates";
-import { validateOntology, type ValidationIssue } from "./lib/validate";
+import { blockingIssues, invariantViolations, validateOntology, type ValidationIssue } from "./lib/validate";
 import { cloneOntology } from "./lib/yaml";
 import { autoLayoutEntities } from "./lib/layoutElk";
 import { t } from "./i18n";
@@ -23,6 +23,7 @@ type Store = {
   selection: Selection;
   search: string;
   validationErrors: ValidationIssue[];
+  invariantViolations: ValidationIssue[];
   undoStack: Ontology[];
   redoStack: Ontology[];
 
@@ -35,7 +36,7 @@ type Store = {
   redo: () => void;
   setSelection: (sel: Selection) => void;
   setSearch: (q: string) => void;
-  addRuleFromSentence: (sentence: string) => void;
+  addInvariantFromSentence: (sentence: string) => void;
   renameEntityName: (entityId: string, newName: string) => void;
   addRelationship: (
     from: string,
@@ -56,8 +57,15 @@ function pushUndo(state: Store, prev: Ontology): Partial<Store> {
   return { undoStack: stack, redoStack: [] };
 }
 
-function revalidate(doc: Ontology | null): ValidationIssue[] {
-  return doc ? validateOntology(doc) : [];
+function revalidate(doc: Ontology | null): {
+  validationErrors: ValidationIssue[];
+  invariantViolations: ValidationIssue[];
+} {
+  const issues = doc ? validateOntology(doc) : [];
+  return {
+    validationErrors: blockingIssues(issues),
+    invariantViolations: invariantViolations(issues),
+  };
 }
 
 export const useOntologyStore = create<Store>((set, get) => {
@@ -69,6 +77,7 @@ export const useOntologyStore = create<Store>((set, get) => {
   selection: null,
   search: "",
   validationErrors: [],
+  invariantViolations: [],
   undoStack: [],
   redoStack: [],
 
@@ -82,7 +91,7 @@ export const useOntologyStore = create<Store>((set, get) => {
       selection: doc.entities[0] ? { kind: "entity", id: doc.entities[0].id } : null,
       undoStack: [],
       redoStack: [],
-      validationErrors: revalidate(doc),
+      ...revalidate(doc),
     });
   },
 
@@ -95,7 +104,7 @@ export const useOntologyStore = create<Store>((set, get) => {
       selection: doc.entities[0] ? { kind: "entity", id: doc.entities[0].id } : null,
       undoStack: [],
       redoStack: [],
-      validationErrors: revalidate(doc),
+      ...revalidate(doc),
     });
   },
 
@@ -108,7 +117,7 @@ export const useOntologyStore = create<Store>((set, get) => {
     set((s) => ({
       ...pushUndo(s, doc),
       doc: next,
-      validationErrors: revalidate(next),
+      ...revalidate(next),
     }));
   },
 
@@ -124,7 +133,7 @@ export const useOntologyStore = create<Store>((set, get) => {
     set({
       doc: repaired.doc,
       selection: nextSelection,
-      validationErrors: revalidate(repaired.doc),
+      ...revalidate(repaired.doc),
     });
   },
 
@@ -136,7 +145,7 @@ export const useOntologyStore = create<Store>((set, get) => {
       doc: cloneOntology(prev),
       undoStack: undoStack.slice(0, -1),
       redoStack: [...redoStack, cloneOntology(doc)],
-      validationErrors: revalidate(prev),
+      ...revalidate(prev),
     });
   },
 
@@ -148,21 +157,21 @@ export const useOntologyStore = create<Store>((set, get) => {
       doc: cloneOntology(next),
       redoStack: redoStack.slice(0, -1),
       undoStack: [...undoStack, cloneOntology(doc!)],
-      validationErrors: revalidate(next),
+      ...revalidate(next),
     });
   },
 
   setSelection: (sel) => set({ selection: sel }),
   setSearch: (q) => set({ search: q }),
 
-  addRuleFromSentence: (sentence) => {
+  addInvariantFromSentence: (sentence) => {
     const text = sentence.trim();
     if (!text) return;
     get().patchDoc((d) => ({
       ...d,
-      rules: [
-        ...d.rules,
-        { id: slugIdFromText(text, "rule"), statement: text },
+      invariants: [
+        ...d.invariants,
+        { id: slugIdFromText(text, "invariant"), statement: text },
       ],
     }));
   },
@@ -307,6 +316,7 @@ export const useOntologyStore = create<Store>((set, get) => {
       undoStack: [],
       redoStack: [],
       validationErrors: [],
+      invariantViolations: [],
     }),
   };
 });

@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { Action } from "../types";
 import {
   addActionPhrase,
+  addInvariantPhrase,
   addPhrase,
-  addRulePhrase,
   editActionPhrase,
+  editInvariantPhrase,
   editPhrase,
-  editRulePhrase,
+  setActionRule,
 } from "./sideLists";
 
 describe("phrase lists", () => {
@@ -23,21 +24,39 @@ describe("phrase lists", () => {
   });
 });
 
-describe("rule phrases", () => {
-  it("stores a sentence as one rule", () => {
-    const rules = addRulePhrase([], "Order can be cancelled");
-    expect(rules).toEqual([
-      { id: "rule-order-can-be-cancelled", statement: "Order can be cancelled" },
+describe("invariant phrases", () => {
+  it("stores a sentence as one invariant", () => {
+    const invariants = addInvariantPhrase([], "Order can be cancelled");
+    expect(invariants).toEqual([
+      { id: "invariant-order-can-be-cancelled", statement: "Order can be cancelled" },
     ]);
   });
 
   it("rebuilds the id when the sentence changes", () => {
-    const rules = editRulePhrase(
-      [{ id: "rule-old", statement: "Old" }],
-      "rule-old",
-      "New rule",
+    const invariants = editInvariantPhrase(
+      [{ id: "invariant-old", statement: "Old" }],
+      "invariant-old",
+      "New invariant",
     );
-    expect(rules[0]).toEqual({ id: "rule-new-rule", statement: "New rule" });
+    expect(invariants[0]).toEqual({
+      id: "invariant-new-invariant",
+      statement: "New invariant",
+    });
+  });
+});
+
+describe("action rule", () => {
+  it("stores and clears the local rule without touching other fields", () => {
+    const current: Action = { id: "confirm", name: "Confirm", entity: "order" };
+    const withRule = setActionRule([current], "confirm", "  payment received  ");
+    expect(withRule[0]).toEqual({
+      id: "confirm",
+      name: "Confirm",
+      entity: "order",
+      rule: "payment received",
+    });
+    const cleared = setActionRule(withRule, "confirm", "   ");
+    expect(cleared[0]).toEqual({ id: "confirm", name: "Confirm", entity: "order" });
   });
 });
 

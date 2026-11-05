@@ -620,6 +620,23 @@ body {
   margin-bottom: 6px;
 }
 
+.phrase-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.phrase-main.active input {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb inset;
+}
+
+.phrase-note {
+  margin: 0;
+}
+
 .phrase-row input,
 .phrase-add input {
   flex: 1;
@@ -659,6 +676,12 @@ body {
   font-size: 0.8rem;
   max-height: 120px;
   overflow: auto;
+}
+
+.errors.invariant-errors {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
 }
 
 .start-screen {

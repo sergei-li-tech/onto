@@ -5,20 +5,22 @@ import { NotesField } from "./NotesField";
 import { NotesSummary } from "./NotesSummary";
 import {
   addActionPhrase,
+  addInvariantPhrase,
   addPhrase,
-  addRulePhrase,
   editActionPhrase,
+  editInvariantPhrase,
   editPhrase,
-  editRulePhrase,
   removeAction,
+  removeInvariant,
   removePhrase,
-  removeRule,
 } from "../lib/sideLists";
 import { useT } from "../i18n";
 import { useOntologyStore } from "../store";
 
 export function SideLists({ doc }: { doc: Ontology }) {
   const patchDoc = useOntologyStore((s) => s.patchDoc);
+  const selection = useOntologyStore((s) => s.selection);
+  const setSelection = useOntologyStore((s) => s.setSelection);
   const t = useT();
 
   return (
@@ -33,20 +35,44 @@ export function SideLists({ doc }: { doc: Ontology }) {
           onCommit={(notes) => patchDoc((d) => ({ ...d, notes }))}
         />
       </CollapsibleSidebarSection>
-      <PhraseList
-        title={t("sidebar.rules")}
-        placeholder={t("sidebar.rulesPlaceholder")}
-        phrases={doc.rules.map((rule) => ({ key: rule.id, text: rule.statement }))}
-        onAdd={(phrase) => patchDoc((d) => ({ ...d, rules: addRulePhrase(d.rules, phrase) }))}
-        onEdit={(key, phrase) =>
-          patchDoc((d) => ({ ...d, rules: editRulePhrase(d.rules, key, phrase) }))
-        }
-        onRemove={(key) => patchDoc((d) => ({ ...d, rules: removeRule(d.rules, key) }))}
-      />
+      <section>
+        <div className="section-title">{t("sidebar.invariants")}</div>
+        <p className="hint-text">{t("sidebar.invariantsHint")}</p>
+        <PhraseList
+          hideTitle
+          title={t("sidebar.invariants")}
+          placeholder={t("sidebar.invariantsPlaceholder")}
+          phrases={doc.invariants.map((invariant) => ({
+            key: invariant.id,
+            text: invariant.statement,
+          }))}
+          onAdd={(phrase) =>
+            patchDoc((d) => ({
+              ...d,
+              invariants: addInvariantPhrase(d.invariants, phrase),
+            }))
+          }
+          onEdit={(key, phrase) =>
+            patchDoc((d) => ({
+              ...d,
+              invariants: editInvariantPhrase(d.invariants, key, phrase),
+            }))
+          }
+          onRemove={(key) =>
+            patchDoc((d) => ({ ...d, invariants: removeInvariant(d.invariants, key) }))
+          }
+        />
+      </section>
       <PhraseList
         title={t("sidebar.actions")}
         placeholder={t("sidebar.actionsPlaceholder")}
-        phrases={doc.actions.map((action) => ({ key: action.id, text: action.name }))}
+        phrases={doc.actions.map((action) => ({
+          key: action.id,
+          text: action.name,
+          note: action.rule ? `${t("detail.rule")}: ${action.rule}` : undefined,
+        }))}
+        selectedKey={selection?.kind === "action" ? selection.id : null}
+        onSelect={(key) => setSelection({ kind: "action", id: key })}
         onAdd={(phrase) =>
           patchDoc((d) => ({ ...d, actions: addActionPhrase(d.actions, phrase) }))
         }
@@ -89,7 +115,10 @@ export function SideLists({ doc }: { doc: Ontology }) {
           }))
         }
         onRemove={(key) =>
-          patchDoc((d) => ({ ...d, out_of_scope: removePhrase(d.out_of_scope, Number(key)) }))
+          patchDoc((d) => ({
+            ...d,
+            out_of_scope: removePhrase(d.out_of_scope, Number(key)),
+          }))
         }
       />
     </>
@@ -98,15 +127,21 @@ export function SideLists({ doc }: { doc: Ontology }) {
 
 function PhraseList({
   title,
+  hideTitle,
   placeholder,
   phrases,
+  selectedKey,
+  onSelect,
   onAdd,
   onEdit,
   onRemove,
 }: {
   title: string;
+  hideTitle?: boolean;
   placeholder: string;
-  phrases: { key: string; text: string }[];
+  phrases: { key: string; text: string; note?: string }[];
+  selectedKey?: string | null;
+  onSelect?: (key: string) => void;
   onAdd: (phrase: string) => void;
   onEdit: (key: string, phrase: string) => void;
   onRemove: (key: string) => void;
@@ -123,11 +158,14 @@ function PhraseList({
 
   return (
     <section>
-      <div className="section-title">{title}</div>
+      {hideTitle ? null : <div className="section-title">{title}</div>}
       {phrases.map((phrase) => (
         <PhraseRow
           key={phrase.key}
           text={phrase.text}
+          note={phrase.note}
+          active={selectedKey === phrase.key}
+          onSelect={onSelect ? () => onSelect(phrase.key) : undefined}
           onCommit={(next) => onEdit(phrase.key, next)}
           onRemove={() => onRemove(phrase.key)}
         />
@@ -155,10 +193,16 @@ function PhraseList({
 
 function PhraseRow({
   text,
+  note,
+  active,
+  onSelect,
   onCommit,
   onRemove,
 }: {
   text: string;
+  note?: string;
+  active?: boolean;
+  onSelect?: () => void;
   onCommit: (next: string) => void;
   onRemove: () => void;
 }) {
@@ -171,18 +215,23 @@ function PhraseRow({
 
   return (
     <div className="phrase-row">
-      <input
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => {
-          const trimmed = draft.trim();
-          if (!trimmed || trimmed === text) setDraft(text);
-          else onCommit(trimmed);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") e.currentTarget.blur();
-        }}
-      />
+      <div className={`phrase-main${active ? " active" : ""}`}>
+        <input
+          value={draft}
+          onFocus={onSelect}
+          onClick={onSelect}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={() => {
+            const trimmed = draft.trim();
+            if (!trimmed || trimmed === text) setDraft(text);
+            else onCommit(trimmed);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+        />
+        {note ? <p className="hint-text phrase-note">{note}</p> : null}
+      </div>
       <button type="button" aria-label={t("common.delete")} onClick={onRemove}>
         ×
       </button>
