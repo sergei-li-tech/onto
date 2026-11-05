@@ -44,7 +44,6 @@ export function formatValidationIssue(
     entity: issue.entity ?? "",
     attribute: issue.attribute ?? "",
     value: issue.value ?? "",
-    states: issue.states ?? "",
   });
 }
 

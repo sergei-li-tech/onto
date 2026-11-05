@@ -1,22 +1,20 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import Ajv2020 from "ajv/dist/2020.js";
 import { describe, expect, it } from "vitest";
+import schema from "../../../schema/ontology.schema.json";
 import { translate } from "../i18n";
 import { formatValidationIssue } from "./validationMessages";
 import { validateOntology, type ValidationIssue } from "./validate";
 import { parseOntologyYaml, serializeOntology } from "./yaml";
-import type { Ontology } from "../types";
+import type { Action, Ontology } from "../types";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const templatePath = join(here, "../../../templates/generic.yaml");
+const validateSchema = new Ajv2020({ allErrors: true, strict: false }).compile(schema);
 
-function businessActionsDoc(options: {
-  statusValues?: string[];
-  fromStates?: string[];
-  toState?: string;
-  withEntity?: boolean;
-}): Ontology {
+function docWithAction(action: Action): Ontology {
   const doc = parseOntologyYaml(readFileSync(templatePath, "utf8"));
   doc.layout = undefined;
   doc.entities = [
@@ -24,31 +22,15 @@ function businessActionsDoc(options: {
       id: "entity_business_actions",
       name: "Business actions",
       primary_key: "action_id",
-      attributes: [
-        { id: "action_id", type: "string", name: "Action id", required: true },
-        ...(options.statusValues
-          ? [
-              {
-                id: "status",
-                type: "enum" as const,
-                name: "Status",
-                values: options.statusValues,
-              },
-            ]
-          : []),
-      ],
+      attributes: [{ id: "action_id", type: "string", name: "Action id", required: true }],
     },
   ];
-  doc.actions = [
-    {
-      id: "submit-action-for-approval",
-      name: "Submit action for approval",
-      ...(options.withEntity === false ? {} : { entity: "entity_business_actions" }),
-      ...(options.fromStates ? { from_states: options.fromStates } : {}),
-      ...(options.toState ? { to_state: options.toState } : {}),
-    },
-  ];
+  doc.actions = [action];
   return doc;
+}
+
+function withLegacyStates(action: Action, fields: Record<string, unknown>): Action {
+  return { ...action, ...fields } as unknown as Action;
 }
 
 function only(issues: ValidationIssue[], code: string): ValidationIssue {
@@ -57,58 +39,98 @@ function only(issues: ValidationIssue[], code: string): ValidationIssue {
   return found[0]!;
 }
 
-describe("action state checking", () => {
-  it("does not require status when the action declares no states", () => {
-    const doc = businessActionsDoc({});
+const plainAction: Action = {
+  id: "submit-action-for-approval",
+  name: "Submit action for approval",
+  entity: "entity_business_actions",
+  requires_confirmation: true,
+  rule: "all fields are filled",
+};
+
+describe("actions without states", () => {
+  it("loads, validates and round-trips a document without state fields", () => {
+    const doc = docWithAction(plainAction);
     expect(validateOntology(doc)).toEqual([]);
 
-    const again = parseOntologyYaml(serializeOntology(doc));
-    expect(again.actions[0]?.entity).toBe("entity_business_actions");
+    const text = serializeOntology(doc);
+    expect(text).not.toContain("from_states");
+    expect(text).not.toContain("to_state");
+
+    const again = parseOntologyYaml(text);
+    expect(again.actions).toEqual([plainAction]);
     expect(validateOntology(again)).toEqual([]);
   });
 
-  it("does not require status when from_states is empty", () => {
-    const doc = businessActionsDoc({ fromStates: [] });
-    // An empty from_states is rejected by the schema, but not as a missing status.
-    expect(validateOntology(doc).map((issue) => issue.code)).not.toContain(
-      "actionEntityNoStatus",
-    );
-    doc.actions[0]!.from_states = undefined;
+  it("does not require the action to be bound to an entity", () => {
+    const doc = docWithAction({ id: "approve", name: "Approve" });
     expect(validateOntology(doc)).toEqual([]);
   });
 
-  it("reports a missing status enum when the action declares states", () => {
-    const doc = businessActionsDoc({ fromStates: ["draft"], toState: "pending" });
+  it("accepts an entity that has no status attribute", () => {
+    const doc = docWithAction(plainAction);
+    expect(doc.entities[0]!.attributes.some((a) => a.id === "status")).toBe(false);
+    expect(validateOntology(doc)).toEqual([]);
+  });
+});
+
+describe("legacy state fields", () => {
+  it("is rejected by the JSON schema itself", () => {
+    for (const field of ["from_states", "to_state"] as const) {
+      const doc = docWithAction(
+        withLegacyStates(plainAction, field === "from_states" ? { from_states: ["draft"] } : { to_state: "pending" }),
+      );
+      expect(validateSchema(doc), field).toBe(false);
+      const unexpected = validateSchema.errors?.find(
+        (error) =>
+          error.keyword === "additionalProperties" &&
+          (error.params as { additionalProperty?: string }).additionalProperty === field,
+      );
+      expect(unexpected, field).toBeDefined();
+      expect(unexpected?.instancePath, field).toBe("/actions/0");
+    }
+  });
+
+  it("reports from_states with one explanatory issue and no generic schema noise", () => {
+    const doc = docWithAction(withLegacyStates(plainAction, { from_states: ["draft"] }));
     const issues = validateOntology(doc);
-    const issue = only(issues, "actionEntityNoStatus");
+
+    expect(issues.some((issue) => issue.keyword === "additionalProperties")).toBe(false);
+    const issue = only(issues, "actionStatesUnsupported");
     expect(issue.action).toBe("submit-action-for-approval");
-    expect(issue.value).toBe("entity_business_actions");
-    expect(issue.states).toBe("draft, pending");
+    expect(issue.value).toBe("from_states");
   });
 
-  it("keeps accepting an entity whose status enum covers the states", () => {
-    const doc = businessActionsDoc({
-      statusValues: ["draft", "pending"],
-      fromStates: ["draft"],
-      toState: "pending",
-    });
-    expect(validateOntology(doc)).toEqual([]);
+  it("rejects to_state the same way", () => {
+    const doc = docWithAction(withLegacyStates(plainAction, { to_state: "pending" }));
+    const issue = only(validateOntology(doc), "actionStatesUnsupported");
+    expect(issue.value).toBe("to_state");
   });
 
-  it("reports an unknown target state against the enum", () => {
-    const doc = businessActionsDoc({
-      statusValues: ["draft", "pending"],
-      fromStates: ["draft"],
-      toState: "shipped",
-    });
-    const issue = only(validateOntology(doc), "actionUnknownToState");
-    expect(issue.value).toBe("shipped");
+  it("keeps parsed legacy fields so opening a legacy file is not silent", () => {
+    const text = serializeOntology(docWithAction(plainAction)).replace(
+      "  - id: submit-action-for-approval",
+      "  - from_states:\n      - draft\n    id: submit-action-for-approval",
+    );
+    const doc = parseOntologyYaml(text);
+    expect((doc.actions[0] as unknown as Record<string, unknown>).from_states).toEqual([
+      "draft",
+    ]);
+    expect(only(validateOntology(doc), "actionStatesUnsupported").action).toBe(
+      "submit-action-for-approval",
+    );
+  });
+
+  it("does not re-serialize state fields", () => {
+    const doc = docWithAction(withLegacyStates(plainAction, { from_states: ["draft"] }));
+    const text = serializeOntology(doc);
+    expect(text).not.toContain("from_states");
+    expect(text).not.toContain("to_state");
   });
 });
 
 describe("action state message", () => {
-  const doc = businessActionsDoc({ fromStates: ["draft"], toState: "pending" });
-  const issue = only(validateOntology(doc), "actionEntityNoStatus");
+  const doc = docWithAction(withLegacyStates(plainAction, { from_states: ["draft"] }));
+  const issue = only(validateOntology(doc), "actionStatesUnsupported");
 
   const messages = {
     en: formatValidationIssue(issue, (key, vars) => translate("en", key, vars)),
@@ -116,45 +138,19 @@ describe("action state message", () => {
     ko: formatValidationIssue(issue, (key, vars) => translate("ko", key, vars)),
   };
 
-  it("names the entity, the states and the attribute to add", () => {
-    for (const [lang, message] of Object.entries(messages)) {
-      expect(message, lang).toContain("entity_business_actions");
-      expect(message, lang).toContain("draft, pending");
-      expect(message, lang).toContain("status");
-      expect(message, lang).toContain("enum");
-    }
-  });
-
-  it("offers the alternative of removing the states", () => {
-    expect(messages.en).toContain("remove from_states/to_state");
-    expect(messages.ru).toContain("уберите from_states/to_state");
+  it("says states are unsupported and names the fields to remove", () => {
+    expect(messages.en).toContain("states are not supported");
+    expect(messages.en).toContain("from_states/to_state");
+    expect(messages.ru).toContain("состояния не поддерживаются");
+    expect(messages.ru).toContain("from_states/to_state");
+    expect(messages.ko).toContain("지원되지 않습니다");
     expect(messages.ko).toContain("from_states/to_state");
   });
 
-  it("leaves no unsubstituted placeholders", () => {
+  it("names the action and leaves no unsubstituted placeholders", () => {
     for (const [lang, message] of Object.entries(messages)) {
+      expect(message, lang).toContain("submit-action-for-approval");
       expect(message, lang).not.toMatch(/\{\{/);
     }
-  });
-});
-
-describe("schema condition on action states", () => {
-  it("requires entity when the action declares states", () => {
-    const doc = businessActionsDoc({
-      fromStates: ["draft"],
-      toState: "pending",
-      withEntity: false,
-    });
-    const issues = validateOntology(doc).filter((issue) => issue.code === "schema");
-    const missing = issues.find(
-      (issue) => issue.keyword === "required" && issue.field === "entity",
-    );
-    expect(missing).toBeDefined();
-    expect(missing?.path).toBe("/actions/0");
-  });
-
-  it("accepts an action without states and without entity", () => {
-    const doc = businessActionsDoc({ withEntity: false });
-    expect(validateOntology(doc)).toEqual([]);
   });
 });
