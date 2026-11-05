@@ -1,6 +1,6 @@
 import type { Ontology } from "../types";
 import { serializeOntology } from "./yaml";
-import { validateOntology } from "./validate";
+import { blockingIssues, validateOntology } from "./validate";
 import { formatValidationIssues } from "./validationMessages";
 import { t } from "../i18n";
 
@@ -27,7 +27,7 @@ export async function pickYamlFile(): Promise<{ text: string; handle: FileSystem
 }
 
 export async function saveYamlAs(doc: Ontology): Promise<FileSystemFileHandle | null> {
-  const errors = validateOntology(doc);
+  const errors = blockingIssues(validateOntology(doc));
   if (errors.length) {
     alert(t("file.saveBlocked", { errors: formatValidationIssues(errors).slice(0, 8).join("\n") }));
     return null;
@@ -53,7 +53,7 @@ export async function saveYamlToHandle(
   handle: FileSystemFileHandle,
   doc: Ontology,
 ): Promise<boolean> {
-  const errors = validateOntology(doc);
+  const errors = blockingIssues(validateOntology(doc));
   if (errors.length) {
     alert(t("file.saveBlocked", { errors: formatValidationIssues(errors).slice(0, 8).join("\n") }));
     return false;
