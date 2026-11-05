@@ -118,6 +118,7 @@
     },
     "entity": {
       "type": "object",
+      "description": "An entity used by an action that declares `from_states`/`to_state` must have an enum attribute with id `status`; otherwise the application rejects the document. Entities not used by state-changing actions may omit `status`. This cross-branch rule cannot be expressed in JSON Schema.",
       "required": ["id", "name", "attributes"],
       "additionalProperties": false,
       "properties": {
@@ -164,6 +165,7 @@
     },
     "action": {
       "type": "object",
+      "description": "A step on an entity. `entity` and `status` are conditional: when the action declares state transitions (`from_states` non-empty or `to_state` set), `entity` is required and that entity must declare an enum attribute id `status` covering these states (checked by the application, not by this schema). An action without states may reference an entity that has no `status`.",
       "required": ["id", "name"],
       "additionalProperties": false,
       "properties": {
@@ -182,7 +184,18 @@
           "minLength": 1,
           "description": "Local execution condition: the action is blocked until the rule holds."
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              { "required": ["from_states"] },
+              { "required": ["to_state"] }
+            ]
+          },
+          "then": { "required": ["entity"] }
+        }
+      ]
     },
     "invariant": {
       "type": "object",
