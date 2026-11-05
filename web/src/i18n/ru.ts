@@ -169,7 +169,7 @@ export const ru: Dict = {
   "validation.relationshipUnknownTo": "Связь {{id}}: неизвестная сущность «{{value}}» в конце.",
   "validation.duplicateActionId": "Повторяющийся идентификатор действия: {{id}}.",
   "validation.actionUnknownEntity": "Действие {{id}}: неизвестная сущность «{{value}}».",
-  "validation.actionEntityNoStatus": "Действие {{id}}: у сущности {{value}} нет enum-поля status.",
+  "validation.actionEntityNoStatus": "Действие {{id}}: объявлены состояния ({{states}}), но у сущности {{value}} нет enum-атрибута status. Добавьте в {{value}} атрибут id: status, type: enum, values: [{{states}}] — либо уберите from_states/to_state у действия.",
   "validation.actionUnknownFromState": "Действие {{id}}: неизвестное состояние «{{value}}».",
   "validation.actionUnknownToState": "Действие {{id}}: неизвестное целевое состояние «{{value}}».",
   "validation.invariant.duplicateInvariantId": "Нарушен инвариант: повторяющийся идентификатор инварианта {{id}}.",

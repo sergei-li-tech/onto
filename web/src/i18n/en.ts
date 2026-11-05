@@ -167,7 +167,7 @@ export const en = {
   "validation.relationshipUnknownTo": "Relationship {{id}}: unknown target entity “{{value}}”.",
   "validation.duplicateActionId": "Duplicate action id: {{id}}.",
   "validation.actionUnknownEntity": "Action {{id}}: unknown entity “{{value}}”.",
-  "validation.actionEntityNoStatus": "Action {{id}}: entity {{value}} has no enum attribute status.",
+  "validation.actionEntityNoStatus": "Action {{id}}: entity {{value}} declares states ({{states}}) but has no enum attribute status. Add to {{value}} an attribute id: status, type: enum, values: [{{states}}] — or remove from_states/to_state from the action.",
   "validation.actionUnknownFromState": "Action {{id}}: unknown state “{{value}}”.",
   "validation.actionUnknownToState": "Action {{id}}: unknown destination state “{{value}}”.",
   "validation.invariant.duplicateInvariantId": "Invariant violated: duplicate invariant id {{id}}.",
