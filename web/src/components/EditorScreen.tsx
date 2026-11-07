@@ -7,6 +7,8 @@ import { AiChatPanel, DraftAssistant } from "./AiChatPanel";
 import { DetailPanel } from "./DetailPanel";
 import { nextPanelWidth } from "../lib/panelSize";
 import { useUnsavedLeaveGuard } from "../lib/unsavedChanges";
+import { useEditorHotkeys } from "../lib/useEditorHotkeys";
+import { MermaidModal } from "./MermaidModal";
 import { useT } from "../i18n";
 import { useOntologyStore } from "../store";
 
@@ -18,12 +20,14 @@ const CENTER_MIN = 220;
 
 export function EditorScreen({ doc }: { doc: Ontology }) {
   useUnsavedLeaveGuard();
+  useEditorHotkeys();
   const repairIds = useOntologyStore((s) => s.repairIds);
   const t = useT();
   const gridRef = useRef<HTMLDivElement>(null);
   const [leftWidth, setLeftWidth] = useState(LEFT_DEFAULT);
   const [rightWidth, setRightWidth] = useState(RIGHT_DEFAULT);
   const [dragging, setDragging] = useState<"left" | "right" | null>(null);
+  const [mermaidOpen, setMermaidOpen] = useState(false);
 
   function resizeLeft(clientX: number) {
     const box = gridRef.current?.getBoundingClientRect();
@@ -43,7 +47,7 @@ export function EditorScreen({ doc }: { doc: Ontology }) {
 
   return (
     <div className="app-shell">
-      <TopBar />
+      <TopBar onOpenMermaid={() => setMermaidOpen(true)} />
       <div className="editor-workspace">
         <div
           className={`main-grid${dragging ? " is-resizing" : ""}`}
@@ -75,6 +79,11 @@ export function EditorScreen({ doc }: { doc: Ontology }) {
           </div>
         </div>
       </div>
+      <MermaidModal
+        doc={doc}
+        isOpen={mermaidOpen}
+        onClose={() => setMermaidOpen(false)}
+      />
     </div>
   );
 }

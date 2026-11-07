@@ -13,6 +13,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   const selection = useOntologyStore((s) => s.selection);
   const patchDoc = useOntologyStore((s) => s.patchDoc);
   const renameEntityName = useOntologyStore((s) => s.renameEntityName);
+  const removeEntity = useOntologyStore((s) => s.removeEntity);
   const removeRelationship = useOntologyStore((s) => s.removeRelationship);
   const renameRelationshipName = useOntologyStore((s) => s.renameRelationshipName);
   const setSelection = useOntologyStore((s) => s.setSelection);
@@ -208,17 +209,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
           <button
             type="button"
             className="list-item tech-only attr-remove"
-            onClick={() => {
-              patchDoc((d) => ({
-                ...d,
-                entities: d.entities.filter((e) => e.id !== entity.id),
-                relationships: d.relationships.filter(
-                  (r) => r.from !== entity.id && r.to !== entity.id,
-                ),
-                actions: d.actions.filter((a) => a.entity !== entity.id),
-              }));
-              setSelection(null);
-            }}
+            onClick={() => removeEntity(entity.id)}
           >
             {t("detail.deleteEntity")}
           </button>

@@ -5,7 +5,11 @@ import { useT } from "../i18n";
 import { useOntologyStore } from "../store";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
-export function TopBar() {
+interface TopBarProps {
+  onOpenMermaid?: () => void;
+}
+
+export function TopBar({ onOpenMermaid }: TopBarProps) {
   const doc = useOntologyStore((s) => s.doc);
   const fileName = useOntologyStore((s) => s.fileName);
   const fileHandle = useOntologyStore((s) => s.fileHandle);
@@ -17,6 +21,7 @@ export function TopBar() {
   const backToStart = useOntologyStore((s) => s.backToStart);
   const markSaved = useOntologyStore((s) => s.markSaved);
   const setFileHandle = useOntologyStore((s) => s.setFileHandle);
+  const autosaveStatus = useOntologyStore((s) => s.autosaveStatus);
   const t = useT();
 
   const canSave = validationErrors.length === 0;
@@ -58,8 +63,17 @@ export function TopBar() {
         <button type="button" onClick={() => void runAutoLayout()}>
           {t("topbar.autoLayout")}
         </button>
+        <button type="button" onClick={onOpenMermaid}>
+          {t("topbar.mermaid")}
+        </button>
         <LanguageSwitcher />
         <span className="spacer" />
+        {autosaveStatus !== "idle" && (
+          <span className={`autosave-status ${autosaveStatus}`}>
+            <span className="dot" />
+            {autosaveStatus === "saving" ? t("topbar.saving") : t("topbar.autosaved")}
+          </span>
+        )}
         <span className="meta tech-only">
           {fileName ?? t("topbar.unsaved")} · {doc?.domain} v{doc?.version}
           {doc?.based_on
