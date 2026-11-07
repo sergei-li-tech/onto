@@ -101,4 +101,34 @@ describe("invariant violations", () => {
     doc.invariants = addInvariantPhrase(doc.invariants, "Every order has a client.");
     expect(invariantViolations(validateOntology(doc))).toEqual([]);
   });
+
+  it("round-trips invariant metadata (source, source_type, checked_at) cleanly", () => {
+    const doc = parseOntologyYaml(LEGACY_RULES_YAML);
+    doc.invariants = [
+      {
+        id: "inv_client_order",
+        statement: "Clients cannot exceed 10 active orders",
+        source: "https://wiki.corp/sales/rules#orders",
+        source_type: "doc",
+        checked_at: "2026-11-05",
+      },
+    ];
+    const yaml = serializeOntology(doc);
+    expect(yaml).toContain("source: https://wiki.corp/sales/rules#orders");
+    expect(yaml).toContain("source_type: doc");
+    expect(yaml).toContain("checked_at: 2026-11-05");
+
+    const parsed = parseOntologyYaml(yaml);
+    expect(parsed.invariants[0]).toEqual({
+      id: "inv_client_order",
+      statement: "Clients cannot exceed 10 active orders",
+      source: "https://wiki.corp/sales/rules#orders",
+      source_type: "doc",
+      checked_at: "2026-11-05",
+    });
+
+    const issues = validateOntology(parsed);
+    expect(blockingIssues(issues)).toEqual([]);
+    expect(invariantViolations(issues)).toEqual([]);
+  });
 });

@@ -52,10 +52,15 @@ export interface Action {
   rule?: string;
 }
 
+export type InvariantSourceType = "doc" | "call" | "legal" | "system" | "other";
+
 /** Always-true assertion checked after any action (formerly `rules`). */
 export interface Invariant {
   id: string;
   statement: string;
+  source?: string;
+  source_type?: InvariantSourceType;
+  checked_at?: string;
 }
 
 export interface LayoutNode {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Entity, Ontology } from "../types";
+import type { Entity, InvariantSourceType, Ontology } from "../types";
 import { useOntologyStore } from "../store";
 import { EntityAssistant, RelationshipAssistant } from "./AiChatPanel";
 import { CommaListInput } from "./CommaListInput";
@@ -15,6 +15,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   const renameEntityName = useOntologyStore((s) => s.renameEntityName);
   const removeEntity = useOntologyStore((s) => s.removeEntity);
   const removeRelationship = useOntologyStore((s) => s.removeRelationship);
+  const removeInvariant = useOntologyStore((s) => s.removeInvariant);
   const renameRelationshipName = useOntologyStore((s) => s.renameRelationshipName);
   const setSelection = useOntologyStore((s) => s.setSelection);
   const t = useT();
@@ -22,6 +23,8 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   const [nameDraft, setNameDraft] = useState("");
   const [uniqueIdDraft, setUniqueIdDraft] = useState("");
   const [relNameDraft, setRelNameDraft] = useState("");
+  const [invStatementDraft, setInvStatementDraft] = useState("");
+  const [invSourceDraft, setInvSourceDraft] = useState("");
 
   const selectedEntityId =
     selection?.kind === "entity" ? selection.id : null;
@@ -38,6 +41,12 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   const selectedAction = selectedActionId
     ? doc.actions.find((a) => a.id === selectedActionId)
     : undefined;
+
+  const selectedInvariantId = selection?.kind === "invariant" ? selection.id : null;
+  const selectedInvariant = selectedInvariantId
+    ? doc.invariants.find((i) => i.id === selectedInvariantId)
+    : undefined;
+
   const [actionNameDraft, setActionNameDraft] = useState("");
   const [ruleDraft, setRuleDraft] = useState("");
 
@@ -60,6 +69,14 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   useEffect(() => {
     setRelNameDraft(selectedRelName ?? "");
   }, [selectedRelId, selectedRelName]);
+
+  useEffect(() => {
+    setInvStatementDraft(selectedInvariant?.statement ?? "");
+  }, [selectedInvariantId, selectedInvariant?.statement]);
+
+  useEffect(() => {
+    setInvSourceDraft(selectedInvariant?.source ?? "");
+  }, [selectedInvariantId, selectedInvariant?.source]);
 
   if (!selection) {
     return (
@@ -362,6 +379,150 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
               onClick={() => removeRelationship(rel.id)}
             >
               {t("detail.deleteRelationship")}
+            </button>
+          </section>
+        </div>
+      </aside>
+    );
+  }
+
+  if (selection.kind === "invariant" && selectedInvariant) {
+    const inv = selectedInvariant;
+    return (
+      <aside className="detail">
+        <DetailHead
+          title={t("detail.selectedInvariant")}
+          hint={t("detail.invariantCardHint")}
+        />
+        <div className="detail-body">
+          <section className="card-block">
+            <div className="field">
+              <label htmlFor="inv-statement">{t("detail.invariantStatement")}</label>
+              <textarea
+                id="inv-statement"
+                rows={3}
+                value={invStatementDraft}
+                onChange={(e) => setInvStatementDraft(e.target.value)}
+                onBlur={() => {
+                  const trimmed = invStatementDraft.trim();
+                  if (trimmed && trimmed !== inv.statement) {
+                    patchDoc((d) => ({
+                      ...d,
+                      invariants: d.invariants.map((i) =>
+                        i.id === inv.id ? { ...i, statement: trimmed } : i,
+                      ),
+                    }));
+                  } else {
+                    setInvStatementDraft(inv.statement);
+                  }
+                }}
+              />
+            </div>
+
+            <div className="field">
+              <div className="heading-with-info">
+                <label htmlFor="inv-source">{t("detail.invariantSource")}</label>
+                <InfoTip text={t("detail.invariantSourceInfo")} />
+              </div>
+              <input
+                id="inv-source"
+                placeholder={t("detail.invariantSourcePlaceholder")}
+                value={invSourceDraft}
+                onChange={(e) => setInvSourceDraft(e.target.value)}
+                onBlur={() => {
+                  const trimmed = invSourceDraft.trim();
+                  patchDoc((d) => ({
+                    ...d,
+                    invariants: d.invariants.map((i) =>
+                      i.id === inv.id
+                        ? { ...i, source: trimmed ? trimmed : undefined }
+                        : i,
+                    ),
+                  }));
+                }}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="inv-source-type">{t("detail.invariantSourceType")}</label>
+              <select
+                id="inv-source-type"
+                value={inv.source_type ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value as InvariantSourceType | "";
+                  patchDoc((d) => ({
+                    ...d,
+                    invariants: d.invariants.map((i) =>
+                      i.id === inv.id
+                        ? { ...i, source_type: val ? val : undefined }
+                        : i,
+                    ),
+                  }));
+                }}
+              >
+                <option value="">{t("detail.sourceTypeNone")}</option>
+                <option value="doc">{t("detail.sourceTypeDoc")}</option>
+                <option value="call">{t("detail.sourceTypeCall")}</option>
+                <option value="legal">{t("detail.sourceTypeLegal")}</option>
+                <option value="system">{t("detail.sourceTypeSystem")}</option>
+                <option value="other">{t("detail.sourceTypeOther")}</option>
+              </select>
+            </div>
+
+            <div className="field">
+              <div className="heading-with-info">
+                <label htmlFor="inv-checked-at">{t("detail.invariantCheckedAt")}</label>
+                <InfoTip text={t("detail.invariantCheckedAtInfo")} />
+              </div>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input
+                  id="inv-checked-at"
+                  type="date"
+                  value={inv.checked_at ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    patchDoc((d) => ({
+                      ...d,
+                      invariants: d.invariants.map((i) =>
+                        i.id === inv.id
+                          ? { ...i, checked_at: val ? val : undefined }
+                          : i,
+                      ),
+                    }));
+                  }}
+                />
+                <button
+                  type="button"
+                  style={{
+                    padding: "6px 10px",
+                    fontSize: "0.8rem",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: "6px",
+                    background: "#fff",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                  onClick={() => {
+                    const today = new Date().toISOString().slice(0, 10);
+                    patchDoc((d) => ({
+                      ...d,
+                      invariants: d.invariants.map((i) =>
+                        i.id === inv.id ? { ...i, checked_at: today } : i,
+                      ),
+                    }));
+                  }}
+                >
+                  {t("detail.setToday")}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="list-item tech-only attr-remove"
+              onClick={() => removeInvariant(inv.id)}
+            >
+              {t("detail.deleteInvariant")}
             </button>
           </section>
         </div>

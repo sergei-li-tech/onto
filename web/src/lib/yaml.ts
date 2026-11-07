@@ -4,6 +4,7 @@ import type {
   Attribute,
   Entity,
   Invariant,
+  InvariantSourceType,
   Layout,
   Ontology,
   Relationship,
@@ -85,6 +86,17 @@ function attributeToPlain(a: Attribute): Record<string, unknown> {
   return out;
 }
 
+function invariantToPlain(inv: Invariant): Record<string, unknown> {
+  const out: Record<string, unknown> = {
+    id: inv.id,
+    statement: inv.statement,
+  };
+  if (inv.source?.trim()) out.source = inv.source.trim();
+  if (inv.source_type) out.source_type = inv.source_type;
+  if (inv.checked_at?.trim()) out.checked_at = inv.checked_at.trim();
+  return out;
+}
+
 export function serializeOntology(doc: Ontology): string {
   const plain: Record<string, unknown> = {
     $schema: ONTOLOGY_SCHEMA_URL,
@@ -94,7 +106,7 @@ export function serializeOntology(doc: Ontology): string {
     entities: doc.entities.map(entityToPlain),
     relationships: doc.relationships.map(relationshipToPlain),
     actions: doc.actions.map(actionToPlain),
-    invariants: doc.invariants,
+    invariants: doc.invariants.map(invariantToPlain),
     open_questions: doc.open_questions,
     out_of_scope: doc.out_of_scope,
   };
@@ -203,10 +215,23 @@ function parseAction(raw: unknown): Action {
 
 function parseInvariant(raw: unknown): Invariant {
   if (!isMap(raw)) throw new Error("Invariant must be an object");
-  return {
+  const inv: Invariant = {
     id: asString(raw.get("id"), "invariants.id"),
     statement: asString(raw.get("statement"), "invariants.statement"),
   };
+  const source = raw.get("source");
+  if (source !== undefined && source !== null) {
+    inv.source = asString(source, "invariants.source");
+  }
+  const sourceType = raw.get("source_type");
+  if (sourceType !== undefined && sourceType !== null) {
+    inv.source_type = asString(sourceType, "invariants.source_type") as InvariantSourceType;
+  }
+  const checkedAt = raw.get("checked_at");
+  if (checkedAt !== undefined && checkedAt !== null) {
+    inv.checked_at = asString(checkedAt, "invariants.checked_at");
+  }
+  return inv;
 }
 
 function parseLayout(raw: unknown): Layout {

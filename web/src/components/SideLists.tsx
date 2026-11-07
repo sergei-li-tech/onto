@@ -42,10 +42,18 @@ export function SideLists({ doc }: { doc: Ontology }) {
           hideTitle
           title={t("sidebar.invariants")}
           placeholder={t("sidebar.invariantsPlaceholder")}
-          phrases={doc.invariants.map((invariant) => ({
-            key: invariant.id,
-            text: invariant.statement,
-          }))}
+          phrases={doc.invariants.map((invariant) => {
+            const metaParts = [];
+            if (invariant.source) metaParts.push(invariant.source);
+            if (invariant.checked_at) metaParts.push(invariant.checked_at);
+            return {
+              key: invariant.id,
+              text: invariant.statement,
+              note: metaParts.length > 0 ? metaParts.join(" · ") : undefined,
+            };
+          })}
+          selectedKey={selection?.kind === "invariant" ? selection.id : null}
+          onSelect={(key) => setSelection({ kind: "invariant", id: key })}
           onAdd={(phrase) =>
             patchDoc((d) => ({
               ...d,
