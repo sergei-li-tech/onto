@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Action, Ontology } from "../types";
 import { actionIdFromName, renameActionInDocument } from "./actions";
+import { parseOntologyYaml, serializeOntology } from "./yaml";
+import { validateOntology } from "./validate";
 
 function docWith(actions: Action[]): Ontology {
   return {
@@ -45,5 +47,43 @@ describe("renameActionInDocument", () => {
 
   it("builds a schema-safe id", () => {
     expect(actionIdFromName("Confirm order", [])).toBe("action_confirm_order");
+  });
+});
+
+describe("OAO security patterns", () => {
+  it("round-trips OAO action patterns (roles_allowed, risk_level, warning_prompt, requires_confirmation)", () => {
+    const oaoAction: Action = {
+      id: "bulk_delete_orders",
+      name: "Bulk Delete Orders",
+      roles_allowed: ["admin"],
+      risk_level: "HIGH",
+      requires_confirmation: true,
+      warning_prompt: "You are about to permanently delete records. This is irreversible.",
+      rule: "only archived orders",
+    };
+    const doc = docWith([oaoAction]);
+    const yaml = serializeOntology(doc);
+    expect(yaml).toContain("risk_level: HIGH");
+    expect(yaml).toContain("roles_allowed:");
+    expect(yaml).toContain("warning_prompt: You are about to permanently delete records.");
+    expect(yaml).toContain("requires_confirmation: true");
+
+    const parsed = parseOntologyYaml(yaml);
+    expect(parsed.actions[0]).toEqual(oaoAction);
+
+    const issues = validateOntology(parsed);
+    expect(issues).toEqual([]);
+  });
+
+  it("fails schema validation when an invalid risk_level is supplied", () => {
+    const invalidDoc = docWith([
+      {
+        id: "action_test",
+        name: "Test",
+        risk_level: "EXTREME" as never,
+      },
+    ]);
+    const issues = validateOntology(invalidDoc);
+    expect(issues.some((i) => i.code === "schema" && i.keyword === "enum")).toBe(true);
   });
 });

@@ -173,6 +173,21 @@
         "entity": { "type": "string", "minLength": 1 },
         "name": { "type": "string", "minLength": 1 },
         "requires_confirmation": { "type": "boolean" },
+        "risk_level": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH"],
+          "description": "OAO risk assessment for Tool Interceptor / execution gating."
+        },
+        "roles_allowed": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Roles authorized to invoke this action (RBAC)."
+        },
+        "warning_prompt": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-in-the-loop warning message displayed when confirmation is required."
+        },
         "rule": {
           "type": "string",
           "minLength": 1,

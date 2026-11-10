@@ -43,11 +43,19 @@ export interface Relationship {
   notes?: string;
 }
 
+export type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
+
 export interface Action {
   id: string;
   name: string;
   entity?: string;
   requires_confirmation?: boolean;
+  /** OAO risk assessment for Tool Interceptor / execution gating. */
+  risk_level?: RiskLevel;
+  /** Roles authorized to invoke this action (RBAC). */
+  roles_allowed?: string[];
+  /** Human-in-the-loop warning message displayed when confirmation is required. */
+  warning_prompt?: string;
   /** Local execution condition: the action is blocked until it holds. Free text, no DSL. */
   rule?: string;
 }

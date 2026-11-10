@@ -74,11 +74,18 @@ export function SideLists({ doc }: { doc: Ontology }) {
       <PhraseList
         title={t("sidebar.actions")}
         placeholder={t("sidebar.actionsPlaceholder")}
-        phrases={doc.actions.map((action) => ({
-          key: action.id,
-          text: action.name,
-          note: action.rule ? `${t("detail.rule")}: ${action.rule}` : undefined,
-        }))}
+        phrases={doc.actions.map((action) => {
+          const badges: string[] = [];
+          if (action.risk_level) badges.push(action.risk_level);
+          if (action.requires_confirmation) badges.push("HITL");
+          if (action.roles_allowed?.length) badges.push(action.roles_allowed.join(", "));
+          if (action.rule) badges.push(action.rule);
+          return {
+            key: action.id,
+            text: action.name,
+            note: badges.length > 0 ? badges.join(" · ") : undefined,
+          };
+        })}
         selectedKey={selection?.kind === "action" ? selection.id : null}
         onSelect={(key) => setSelection({ kind: "action", id: key })}
         onAdd={(phrase) =>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Entity, InvariantSourceType, Ontology } from "../types";
+import type { Entity, InvariantSourceType, Ontology, RiskLevel } from "../types";
 import { useOntologyStore } from "../store";
 import { EntityAssistant, RelationshipAssistant } from "./AiChatPanel";
 import { CommaListInput } from "./CommaListInput";
@@ -16,6 +16,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   const removeEntity = useOntologyStore((s) => s.removeEntity);
   const removeRelationship = useOntologyStore((s) => s.removeRelationship);
   const removeInvariant = useOntologyStore((s) => s.removeInvariant);
+  const removeAction = useOntologyStore((s) => s.removeAction);
   const renameRelationshipName = useOntologyStore((s) => s.renameRelationshipName);
   const setSelection = useOntologyStore((s) => s.setSelection);
   const t = useT();
@@ -49,6 +50,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
 
   const [actionNameDraft, setActionNameDraft] = useState("");
   const [ruleDraft, setRuleDraft] = useState("");
+  const [warningPromptDraft, setWarningPromptDraft] = useState("");
 
   useEffect(() => {
     setActionNameDraft(selectedAction?.name ?? "");
@@ -57,6 +59,10 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   useEffect(() => {
     setRuleDraft(selectedAction?.rule ?? "");
   }, [selectedActionId, selectedAction?.rule]);
+
+  useEffect(() => {
+    setWarningPromptDraft(selectedAction?.warning_prompt ?? "");
+  }, [selectedActionId, selectedAction?.warning_prompt]);
 
   useEffect(() => {
     setNameDraft(selectedEntity?.name ?? "");
@@ -310,6 +316,115 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
               />
               <p className="hint-text">{t("detail.ruleHint")}</p>
             </div>
+
+            <div className="field">
+              <label htmlFor="action-risk-level">{t("detail.actionRiskLevel")}</label>
+              <select
+                id="action-risk-level"
+                value={action.risk_level ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value as RiskLevel | "";
+                  patchDoc((d) => ({
+                    ...d,
+                    actions: d.actions.map((a) =>
+                      a.id === action.id
+                        ? { ...a, risk_level: val ? val : undefined }
+                        : a,
+                    ),
+                  }));
+                }}
+              >
+                <option value="">{t("detail.riskNone")}</option>
+                <option value="LOW">{t("detail.riskLow")}</option>
+                <option value="MEDIUM">{t("detail.riskMedium")}</option>
+                <option value="HIGH">{t("detail.riskHigh")}</option>
+              </select>
+            </div>
+
+            <div className="checkbox-row">
+              <label htmlFor={`action-confirm-${action.id}`}>
+                <input
+                  id={`action-confirm-${action.id}`}
+                  type="checkbox"
+                  checked={Boolean(action.requires_confirmation)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    patchDoc((d) => ({
+                      ...d,
+                      actions: d.actions.map((a) =>
+                        a.id === action.id
+                          ? { ...a, requires_confirmation: checked ? true : undefined }
+                          : a,
+                      ),
+                    }));
+                  }}
+                />
+                <span className="heading-with-info">
+                  {t("detail.actionRequiresConfirmation")}
+                  <InfoTip text={t("detail.actionRequiresConfirmationInfo")} />
+                </span>
+              </label>
+            </div>
+
+            {action.requires_confirmation ? (
+              <div className="field">
+                <div className="heading-with-info">
+                  <label htmlFor={`action-warning-${action.id}`}>
+                    {t("detail.actionWarningPrompt")}
+                  </label>
+                  <InfoTip text={t("detail.actionWarningPromptInfo")} />
+                </div>
+                <input
+                  id={`action-warning-${action.id}`}
+                  placeholder={t("detail.actionWarningPromptPlaceholder")}
+                  value={warningPromptDraft}
+                  onChange={(e) => setWarningPromptDraft(e.target.value)}
+                  onBlur={() => {
+                    const trimmed = warningPromptDraft.trim();
+                    patchDoc((d) => ({
+                      ...d,
+                      actions: d.actions.map((a) =>
+                        a.id === action.id
+                          ? { ...a, warning_prompt: trimmed ? trimmed : undefined }
+                          : a,
+                      ),
+                    }));
+                  }}
+                />
+              </div>
+            ) : null}
+
+            <div className="field">
+              <div className="heading-with-info">
+                <label htmlFor={`action-roles-${action.id}`}>
+                  {t("detail.actionRolesAllowed")}
+                </label>
+                <InfoTip text={t("detail.actionRolesAllowedInfo")} />
+              </div>
+              <CommaListInput
+                id={`action-roles-${action.id}`}
+                placeholder={t("detail.actionRolesAllowedPlaceholder")}
+                value={action.roles_allowed ?? []}
+                onCommit={(roles) => {
+                  patchDoc((d) => ({
+                    ...d,
+                    actions: d.actions.map((a) =>
+                      a.id === action.id
+                        ? { ...a, roles_allowed: roles.length > 0 ? roles : undefined }
+                        : a,
+                    ),
+                  }));
+                }}
+              />
+            </div>
+
+            <button
+              type="button"
+              className="list-item tech-only attr-remove"
+              onClick={() => removeAction(action.id)}
+            >
+              {t("detail.deleteAction")}
+            </button>
           </section>
         </div>
       </aside>

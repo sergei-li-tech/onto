@@ -8,6 +8,7 @@ import type {
   Layout,
   Ontology,
   Relationship,
+  RiskLevel,
 } from "../types";
 
 export const INVARIANTS_KEY = "invariants";
@@ -188,8 +189,11 @@ function parseRelationship(raw: unknown): Relationship {
 function actionToPlain(a: Action): Record<string, unknown> {
   const out: Record<string, unknown> = { id: a.id, name: a.name };
   if (a.entity) out.entity = a.entity;
+  if (a.roles_allowed && a.roles_allowed.length > 0) out.roles_allowed = a.roles_allowed;
+  if (a.risk_level) out.risk_level = a.risk_level;
   if (a.requires_confirmation !== undefined) out.requires_confirmation = a.requires_confirmation;
-  if (a.rule?.trim()) out.rule = a.rule;
+  if (a.warning_prompt?.trim()) out.warning_prompt = a.warning_prompt.trim();
+  if (a.rule?.trim()) out.rule = a.rule.trim();
   return out;
 }
 
@@ -207,6 +211,16 @@ function parseAction(raw: unknown): Action {
   const confirm = raw.get("requires_confirmation");
   if (confirm !== undefined) {
     action.requires_confirmation = asBool(confirm, "actions.requires_confirmation");
+  }
+  const risk = raw.get("risk_level");
+  if (risk !== undefined && risk !== null) {
+    action.risk_level = asString(risk, "actions.risk_level") as RiskLevel;
+  }
+  const roles = raw.get("roles_allowed");
+  if (isSeq(roles)) action.roles_allowed = roles.toJSON() as string[];
+  const warning = raw.get("warning_prompt");
+  if (warning !== undefined && warning !== null) {
+    action.warning_prompt = asString(warning, "actions.warning_prompt");
   }
   const rule = raw.get("rule");
   if (rule !== undefined) action.rule = asString(rule, "actions.rule");
