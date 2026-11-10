@@ -16,18 +16,15 @@ describe("formatCardinality", () => {
   });
 
   it("writes an open end as 0..*", () => {
-    expect(formatCardinality("0", "many")).toBe("0..*");
     expect(formatCardinality("0", "*")).toBe("0..*");
   });
 
   it("writes a required many end as 1..*", () => {
-    expect(formatCardinality("1", "many")).toBe("1..*");
     expect(formatCardinality("1", "*")).toBe("1..*");
   });
 
   it("collapses a fixed count to one mark", () => {
     expect(formatCardinality("1", "1")).toBe("1");
-    expect(formatCardinality("many", "many")).toBe("*");
     expect(formatCardinality("*", "*")).toBe("*");
     expect(formatCardinality("0", "0")).toBe("0");
     expect(formatCardinality("5", "5")).toBe("5");
@@ -40,11 +37,9 @@ describe("formatCardinality", () => {
 
 describe("cardinality range helpers", () => {
   it("normalizes bounds correctly", () => {
-    expect(normalizeBound("many")).toBe("*");
     expect(normalizeBound("*")).toBe("*");
     expect(normalizeBound(" 1 ")).toBe("1");
     expect(numericBound("*")).toBe(Infinity);
-    expect(numericBound("many")).toBe(Infinity);
     expect(numericBound("3")).toBe(3);
   });
 
@@ -52,7 +47,6 @@ describe("cardinality range helpers", () => {
     expect(isCardinalityBoundValid("0")).toBe(true);
     expect(isCardinalityBoundValid("10")).toBe(true);
     expect(isCardinalityBoundValid("*")).toBe(true);
-    expect(isCardinalityBoundValid("many")).toBe(true);
     expect(isCardinalityBoundValid("-1")).toBe(false);
     expect(isCardinalityBoundValid("abc")).toBe(false);
   });
@@ -69,7 +63,6 @@ describe("cardinality range helpers", () => {
   it("parses cardinality range strings", () => {
     expect(parseCardinalityRange("0..1")).toEqual({ min: "0", max: "1" });
     expect(parseCardinalityRange("1..*")).toEqual({ min: "1", max: "*" });
-    expect(parseCardinalityRange("1..many")).toEqual({ min: "1", max: "*" });
     expect(parseCardinalityRange("1")).toEqual({ min: "1", max: "1" });
     expect(parseCardinalityRange("*")).toEqual({ min: "*", max: "*" });
     expect(parseCardinalityRange("invalid")).toBeNull();

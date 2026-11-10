@@ -217,6 +217,7 @@ export const ko: Dict = {
   "validation.duplicateRelationshipId": "관계 ID가 중복됩니다: {{id}}.",
   "validation.relationshipUnknownFrom": "관계 {{id}}: 시작 엔터티 “{{value}}”을(를) 알 수 없습니다.",
   "validation.relationshipUnknownTo": "관계 {{id}}: 끝 엔터티 “{{value}}”을(를) 알 수 없습니다.",
+  "validation.cardinalityInvalid": "관계 {{id}}: 잘못된 카디널리티 형식 “{{value}}”.",
   "validation.cardinalityFromMinGreaterThanMax": "관계 {{id}}: 시작 엔터티 최소 카디널리티가 최대보다 큽니다 ({{value}}).",
   "validation.cardinalityToMinGreaterThanMax": "관계 {{id}}: 대상 엔터티 최소 카디널리티가 최대보다 큽니다 ({{value}}).",
   "validation.cardinalityMaxExceeded": "관계 {{id}}: 엔터티 {{entity}}의 최대 관계 수를 초과했습니다 ({{value}}).",

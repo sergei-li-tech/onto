@@ -217,6 +217,7 @@ export const ru: Dict = {
   "validation.duplicateRelationshipId": "Повторяющийся идентификатор связи: {{id}}.",
   "validation.relationshipUnknownFrom": "Связь {{id}}: неизвестная сущность «{{value}}» в начале.",
   "validation.relationshipUnknownTo": "Связь {{id}}: неизвестная сущность «{{value}}» в конце.",
+  "validation.cardinalityInvalid": "Связь {{id}}: недопустимый формат кардинальности «{{value}}».",
   "validation.cardinalityFromMinGreaterThanMax": "Связь {{id}}: минимальная кардинальность истока больше максимальной ({{value}}).",
   "validation.cardinalityToMinGreaterThanMax": "Связь {{id}}: минимальная кардинальность цели больше максимальной ({{value}}).",
   "validation.cardinalityMaxExceeded": "Связь {{id}}: сущность {{entity}} превышает максимальное количество связей ({{value}}).",

@@ -14,9 +14,7 @@ export const CARDINALITY_PRESETS: CardinalityPreset[] = [
 ];
 
 export function normalizeBound(value: Cardinality | string): string {
-  const trimmed = String(value).trim();
-  if (trimmed === "many") return "*";
-  return trimmed;
+  return String(value).trim();
 }
 
 export function numericBound(value: Cardinality | string): number {
@@ -155,4 +153,15 @@ export function formatCardinalitySpec(
     from: fromFormatted,
     to: toFormatted,
   };
+}
+
+export function getRelationshipBounds(cardinality: CardinalitySpec): CardinalityBounds {
+  return (
+    parseCardinalitySpec(cardinality) ?? {
+      from_min: "1",
+      from_max: "1",
+      to_min: "0",
+      to_max: "*",
+    }
+  );
 }

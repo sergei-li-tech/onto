@@ -4,18 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-CARDINALITY = {"0", "1", "many"}
-
 RELATIONSHIP_SCOPE_PROMPT = """You are an assistant for a single relationship during a discussion with a domain stakeholder.
 
 Scope is strict: only the selected_relationship_id relationship.
 Only one operation is allowed: update_relationship with this id.
-Allowed in patch: name and cardinality from_min, from_max, to_min, to_max.
+Allowed in patch: name and cardinality.
 name — in English, how they are related.
-from_min and from_max — how many from entities per one to entity.
-to_min and to_max — how many to entities per one from entity.
-Cardinality values are only "0", "1", or "many".
-0 for minimum means the relationship is optional on that side.
+cardinality — target cardinality e.g. "0..*", "1..*", "0..1", "1..1", or object {"from": "0..1", "to": "0..*"}.
 
 You cannot change from and to. You cannot create or remove entities or other relationships.
 If asked to edit entities or other relationships — set operations: [] and explain that this is handled by the schema assistant.
@@ -26,7 +21,7 @@ Respond ONLY with JSON (no markdown):
   "operations": [ ... ]
 }
 
-Format: {"op":"update_relationship","id":"...","patch":{"name?","from_min?","from_max?","to_min?","to_max?"}}"""
+Format: {"op":"update_relationship","id":"...","patch":{"name?","cardinality?"}}"""
 
 
 def relationship_context(doc: dict[str, Any], relationship_id: str) -> dict[str, Any]:
@@ -95,10 +90,6 @@ def _trim_relationship_op(op: Any, relationship_id: str) -> dict[str, Any] | Non
     cardinality = patch.get("cardinality")
     if isinstance(cardinality, (str, dict)):
         next_patch["cardinality"] = cardinality
-    for key in ("from_min", "from_max", "to_min", "to_max"):
-        value = patch.get(key)
-        if isinstance(value, str) and value in CARDINALITY:
-            next_patch[key] = value
     if not next_patch:
         return None
     return {"op": "update_relationship", "id": relationship_id, "patch": next_patch}

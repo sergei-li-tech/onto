@@ -10,7 +10,6 @@ import type {
   Relationship,
   RiskLevel,
 } from "../types";
-import { formatCardinalitySpec, parseCardinalitySpec } from "./cardinality";
 
 export const INVARIANTS_KEY = "invariants";
 /** Key used by files written before the `rules` → `invariants` rename. */
@@ -67,7 +66,7 @@ function relationshipToPlain(r: Relationship): Record<string, unknown> {
     from: r.from,
     to: r.to,
     name: r.name,
-    cardinality: formatCardinalitySpec(r.from_min, r.from_max, r.to_min, r.to_max),
+    cardinality: r.cardinality,
   };
   if (r.notes?.trim()) out.notes = r.notes;
   return out;
@@ -174,41 +173,22 @@ function parseRelationship(raw: unknown): Relationship {
   const to = asString(raw.get("to"), "relationships.to");
   const name = asString(raw.get("name"), "relationships.name");
 
-  let from_min = "1";
-  let from_max = "1";
-  let to_min = "0";
-  let to_max = "*";
-
   const rawCard = raw.get("cardinality");
-  if (rawCard !== undefined && rawCard !== null) {
-    const cardVal = isMap(rawCard)
-      ? rawCard.toJSON()
-      : isScalar(rawCard)
-        ? rawCard.value
-        : rawCard;
-    const parsed = parseCardinalitySpec(cardVal);
-    if (parsed) {
-      from_min = parsed.from_min;
-      from_max = parsed.from_max;
-      to_min = parsed.to_min;
-      to_max = parsed.to_max;
-    }
-  } else if (raw.has("from_min") || raw.has("to_max")) {
-    from_min = (asString(raw.get("from_min"), "relationships.from_min") as string) ?? "1";
-    from_max = (asString(raw.get("from_max"), "relationships.from_max") as string) ?? "1";
-    to_min = (asString(raw.get("to_min"), "relationships.to_min") as string) ?? "0";
-    to_max = (asString(raw.get("to_max"), "relationships.to_max") as string) ?? "*";
+  if (rawCard === undefined || rawCard === null) {
+    throw new Error(`Relationship ${id}: missing required field "cardinality"`);
   }
+  const cardVal = isMap(rawCard)
+    ? (rawCard.toJSON() as { from?: string; to?: string })
+    : isScalar(rawCard)
+      ? String(rawCard.value)
+      : (rawCard as string);
 
   const rel: Relationship = {
     id,
     from,
     to,
     name,
-    from_min,
-    from_max,
-    to_min,
-    to_max,
+    cardinality: cardVal,
   };
   const relNotes = raw.get("notes");
   if (relNotes !== undefined) rel.notes = asString(relNotes, "relationships.notes");

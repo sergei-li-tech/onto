@@ -7,7 +7,7 @@ from onto.server.relationship_scope import (
 
 def test_relationship_prompt_keeps_the_scope_on_one_link():
     assert "selected_relationship_id" in RELATIONSHIP_SCOPE_PROMPT
-    assert "from_min" in RELATIONSHIP_SCOPE_PROMPT
+    assert "cardinality" in RELATIONSHIP_SCOPE_PROMPT
     assert "cannot change from and to" in RELATIONSHIP_SCOPE_PROMPT.lower()
 
 
@@ -24,6 +24,7 @@ def test_relationship_context_names_both_ends():
                     "from": "entity_consultation",
                     "to": "entity_order",
                     "name": "provides",
+                    "cardinality": "0..*",
                 }
             ],
         },
@@ -45,10 +46,7 @@ def test_relationship_scope_keeps_name_and_cardinality_for_this_link():
                 "id": "rel-provides",
                 "patch": {
                     "name": "provides",
-                    "from_min": "0",
-                    "from_max": "1",
-                    "to_min": "0",
-                    "to_max": "many",
+                    "cardinality": "0..*",
                     "from": "other",
                     "to": "other",
                 },
@@ -62,10 +60,7 @@ def test_relationship_scope_keeps_name_and_cardinality_for_this_link():
             "id": "rel-provides",
             "patch": {
                 "name": "provides",
-                "from_min": "0",
-                "from_max": "1",
-                "to_min": "0",
-                "to_max": "many",
+                "cardinality": "0..*",
             },
         }
     ]
@@ -76,7 +71,7 @@ def test_relationship_scope_drops_other_work():
         [
             {"op": "update_relationship", "id": "rel-other", "patch": {"name": "no"}},
             {"op": "add_entity", "entity": {"id": "order"}},
-            {"op": "update_relationship", "id": "rel-provides", "patch": {"from_min": "2"}},
+            {"op": "update_relationship", "id": "rel-provides", "patch": {"invalid_field": "2"}},
             {"op": "update_relationship", "id": "rel-provides", "patch": {}},
             {"op": "remove_entity", "id": "entity_order"},
         ],

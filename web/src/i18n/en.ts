@@ -215,6 +215,7 @@ export const en = {
   "validation.duplicateRelationshipId": "Duplicate relationship id: {{id}}.",
   "validation.relationshipUnknownFrom": "Relationship {{id}}: unknown source entity “{{value}}”.",
   "validation.relationshipUnknownTo": "Relationship {{id}}: unknown target entity “{{value}}”.",
+  "validation.cardinalityInvalid": "Relationship {{id}}: invalid cardinality specification “{{value}}”.",
   "validation.cardinalityFromMinGreaterThanMax": "Relationship {{id}}: source cardinality min is greater than max ({{value}}).",
   "validation.cardinalityToMinGreaterThanMax": "Relationship {{id}}: target cardinality min is greater than max ({{value}}).",
   "validation.cardinalityMaxExceeded": "Relationship {{id}}: entity {{entity}} exceeds maximum relationships ({{value}}).",

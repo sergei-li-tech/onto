@@ -1,5 +1,5 @@
 import type { Cardinality, Entity, Ontology, Relationship } from "../types";
-import { numericBound } from "./cardinality";
+import { getRelationshipBounds, numericBound } from "./cardinality";
 
 function sanitizeToken(str: string): string {
   const cleaned = str.replace(/[^a-zA-Z0-9_]/g, "_");
@@ -75,8 +75,9 @@ export function exportMermaidER(doc: Ontology): string {
   for (const rel of doc.relationships) {
     const fromId = sanitizeToken(rel.from);
     const toId = sanitizeToken(rel.to);
-    const left = erLeftSymbol(rel.from_min, rel.from_max);
-    const right = erRightSymbol(rel.to_min, rel.to_max);
+    const bounds = getRelationshipBounds(rel.cardinality);
+    const left = erLeftSymbol(bounds.from_min, bounds.from_max);
+    const right = erRightSymbol(bounds.to_min, bounds.to_max);
     const label = rel.name ? ` : "${escapeLabel(rel.name)}"` : " : relates";
     lines.push(`    ${fromId} ${left}--${right} ${toId}${label}`);
   }

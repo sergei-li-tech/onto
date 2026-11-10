@@ -9,6 +9,8 @@ import { InfoTip } from "./InfoTip";
 import { editActionPhrase, setActionRule } from "../lib/sideLists";
 import {
   CARDINALITY_PRESETS,
+  formatCardinalitySpec,
+  getRelationshipBounds,
   isCardinalityBoundValid,
   normalizeBound,
 } from "../lib/cardinality";
@@ -87,17 +89,19 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   }, [selectedRelId, selectedRelName]);
 
   useEffect(() => {
-    setFromMinDraft(selectedRel?.from_min ?? "1");
-    setFromMaxDraft(selectedRel?.from_max ?? "1");
-    setToMinDraft(selectedRel?.to_min ?? "0");
-    setToMaxDraft(selectedRel?.to_max ?? "*");
-  }, [
-    selectedRelId,
-    selectedRel?.from_min,
-    selectedRel?.from_max,
-    selectedRel?.to_min,
-    selectedRel?.to_max,
-  ]);
+    if (selectedRel) {
+      const bounds = getRelationshipBounds(selectedRel.cardinality);
+      setFromMinDraft(bounds.from_min);
+      setFromMaxDraft(bounds.from_max);
+      setToMinDraft(bounds.to_min);
+      setToMaxDraft(bounds.to_max);
+    } else {
+      setFromMinDraft("1");
+      setFromMaxDraft("1");
+      setToMinDraft("0");
+      setToMaxDraft("*");
+    }
+  }, [selectedRelId, selectedRel?.cardinality]);
 
   useEffect(() => {
     setInvStatementDraft(selectedInvariant?.statement ?? "");
@@ -459,6 +463,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
     if (!rel) return null;
     const fromName = doc.entities.find((e) => e.id === rel.from)?.name ?? rel.from;
     const toName = doc.entities.find((e) => e.id === rel.to)?.name ?? rel.to;
+    const bounds = getRelationshipBounds(rel.cardinality);
     return (
       <aside className="detail">
         <DetailHead
@@ -502,9 +507,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
               </label>
               <div className="cardinality-presets">
                 {CARDINALITY_PRESETS.map((p) => {
-                  const active =
-                    normalizeBound(rel.from_min) === p.min &&
-                    normalizeBound(rel.from_max) === p.max;
+                  const active = bounds.from_min === p.min && bounds.from_max === p.max;
                   return (
                     <button
                       key={p.label}
@@ -515,7 +518,15 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
                           ...d,
                           relationships: d.relationships.map((r) =>
                             r.id === rel.id
-                              ? { ...r, from_min: p.min, from_max: p.max }
+                              ? {
+                                  ...r,
+                                  cardinality: formatCardinalitySpec(
+                                    p.min,
+                                    p.max,
+                                    bounds.to_min,
+                                    bounds.to_max,
+                                  ),
+                                }
                               : r,
                           ),
                         }))
@@ -539,11 +550,21 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
                         patchDoc((d) => ({
                           ...d,
                           relationships: d.relationships.map((r) =>
-                            r.id === rel.id ? { ...r, from_min: val } : r,
+                            r.id === rel.id
+                              ? {
+                                  ...r,
+                                  cardinality: formatCardinalitySpec(
+                                    val,
+                                    bounds.from_max,
+                                    bounds.to_min,
+                                    bounds.to_max,
+                                  ),
+                                }
+                              : r,
                           ),
                         }));
                       } else {
-                        setFromMinDraft(rel.from_min ?? "1");
+                        setFromMinDraft(bounds.from_min);
                       }
                     }}
                     onKeyDown={(e) => {
@@ -564,11 +585,21 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
                         patchDoc((d) => ({
                           ...d,
                           relationships: d.relationships.map((r) =>
-                            r.id === rel.id ? { ...r, from_max: val } : r,
+                            r.id === rel.id
+                              ? {
+                                  ...r,
+                                  cardinality: formatCardinalitySpec(
+                                    bounds.from_min,
+                                    val,
+                                    bounds.to_min,
+                                    bounds.to_max,
+                                  ),
+                                }
+                              : r,
                           ),
                         }));
                       } else {
-                        setFromMaxDraft(rel.from_max ?? "1");
+                        setFromMaxDraft(bounds.from_max);
                       }
                     }}
                     onKeyDown={(e) => {
@@ -585,9 +616,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
               </label>
               <div className="cardinality-presets">
                 {CARDINALITY_PRESETS.map((p) => {
-                  const active =
-                    normalizeBound(rel.to_min) === p.min &&
-                    normalizeBound(rel.to_max) === p.max;
+                  const active = bounds.to_min === p.min && bounds.to_max === p.max;
                   return (
                     <button
                       key={p.label}
@@ -598,7 +627,15 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
                           ...d,
                           relationships: d.relationships.map((r) =>
                             r.id === rel.id
-                              ? { ...r, to_min: p.min, to_max: p.max }
+                              ? {
+                                  ...r,
+                                  cardinality: formatCardinalitySpec(
+                                    bounds.from_min,
+                                    bounds.from_max,
+                                    p.min,
+                                    p.max,
+                                  ),
+                                }
                               : r,
                           ),
                         }))
@@ -622,11 +659,21 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
                         patchDoc((d) => ({
                           ...d,
                           relationships: d.relationships.map((r) =>
-                            r.id === rel.id ? { ...r, to_min: val } : r,
+                            r.id === rel.id
+                              ? {
+                                  ...r,
+                                  cardinality: formatCardinalitySpec(
+                                    bounds.from_min,
+                                    bounds.from_max,
+                                    val,
+                                    bounds.to_max,
+                                  ),
+                                }
+                              : r,
                           ),
                         }));
                       } else {
-                        setToMinDraft(rel.to_min ?? "0");
+                        setToMinDraft(bounds.to_min);
                       }
                     }}
                     onKeyDown={(e) => {
@@ -647,11 +694,21 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
                         patchDoc((d) => ({
                           ...d,
                           relationships: d.relationships.map((r) =>
-                            r.id === rel.id ? { ...r, to_max: val } : r,
+                            r.id === rel.id
+                              ? {
+                                  ...r,
+                                  cardinality: formatCardinalitySpec(
+                                    bounds.from_min,
+                                    bounds.from_max,
+                                    bounds.to_min,
+                                    val,
+                                  ),
+                                }
+                              : r,
                           ),
                         }));
                       } else {
-                        setToMaxDraft(rel.to_max ?? "*");
+                        setToMaxDraft(bounds.to_max);
                       }
                     }}
                     onKeyDown={(e) => {

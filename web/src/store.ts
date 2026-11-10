@@ -281,10 +281,7 @@ export const useOntologyStore = create<Store>((set, get) => {
             from,
             to,
             name: trimmedName,
-            from_min: "1",
-            from_max: "1",
-            to_min: "0",
-            to_max: "many",
+            cardinality: "0..*",
           },
         ],
       }));

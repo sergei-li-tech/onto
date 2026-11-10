@@ -118,62 +118,58 @@ export function validateOntology(doc: Ontology): ValidationIssue[] {
     if (!entityIds.has(r.to)) {
       errors.push({ code: "relationshipUnknownTo", relationship: r.id, value: r.to });
     }
-    let fromMin = r.from_min;
-    let fromMax = r.from_max;
-    let toMin = r.to_min;
-    let toMax = r.to_max;
-    if ((fromMin === undefined || toMax === undefined) && r.cardinality) {
-      const parsed = parseCardinalitySpec(r.cardinality);
-      if (parsed) {
-        fromMin = parsed.from_min;
-        fromMax = parsed.from_max;
-        toMin = parsed.to_min;
-        toMax = parsed.to_max;
-      }
-    }
-
-    if (fromMin !== undefined && fromMax !== undefined && !isCardinalityRangeValid(fromMin, fromMax)) {
+    const bounds = parseCardinalitySpec(r.cardinality);
+    if (!bounds) {
       errors.push({
-        code: "cardinalityFromMinGreaterThanMax",
+        code: "cardinalityInvalid",
         relationship: r.id,
-        value: `${fromMin}..${fromMax}`,
+        value: typeof r.cardinality === "string" ? r.cardinality : JSON.stringify(r.cardinality),
       });
-    }
-    if (toMin !== undefined && toMax !== undefined && !isCardinalityRangeValid(toMin, toMax)) {
-      errors.push({
-        code: "cardinalityToMinGreaterThanMax",
-        relationship: r.id,
-        value: `${toMin}..${toMax}`,
-      });
-    }
-
-    const maxTo = toMax !== undefined ? numericBound(toMax) : NaN;
-    if (!Number.isNaN(maxTo) && maxTo < Infinity) {
-      const countOut = doc.relationships.filter(
-        (other) => other.from === r.from && other.name === r.name,
-      ).length;
-      if (countOut > maxTo) {
+    } else {
+      const { from_min: fromMin, from_max: fromMax, to_min: toMin, to_max: toMax } = bounds;
+      if (!isCardinalityRangeValid(fromMin, fromMax)) {
         errors.push({
-          code: "cardinalityMaxExceeded",
+          code: "cardinalityFromMinGreaterThanMax",
           relationship: r.id,
-          entity: r.from,
-          value: `${countOut} > ${toMax}`,
+          value: `${fromMin}..${fromMax}`,
         });
       }
-    }
-
-    const maxFrom = fromMax !== undefined ? numericBound(fromMax) : NaN;
-    if (!Number.isNaN(maxFrom) && maxFrom < Infinity) {
-      const countIn = doc.relationships.filter(
-        (other) => other.to === r.to && other.name === r.name,
-      ).length;
-      if (countIn > maxFrom) {
+      if (!isCardinalityRangeValid(toMin, toMax)) {
         errors.push({
-          code: "cardinalityMaxExceeded",
+          code: "cardinalityToMinGreaterThanMax",
           relationship: r.id,
-          entity: r.to,
-          value: `${countIn} > ${fromMax}`,
+          value: `${toMin}..${toMax}`,
         });
+      }
+
+      const maxTo = numericBound(toMax);
+      if (!Number.isNaN(maxTo) && maxTo < Infinity) {
+        const countOut = doc.relationships.filter(
+          (other) => other.from === r.from && other.name === r.name,
+        ).length;
+        if (countOut > maxTo) {
+          errors.push({
+            code: "cardinalityMaxExceeded",
+            relationship: r.id,
+            entity: r.from,
+            value: `${countOut} > ${toMax}`,
+          });
+        }
+      }
+
+      const maxFrom = numericBound(fromMax);
+      if (!Number.isNaN(maxFrom) && maxFrom < Infinity) {
+        const countIn = doc.relationships.filter(
+          (other) => other.to === r.to && other.name === r.name,
+        ).length;
+        if (countIn > maxFrom) {
+          errors.push({
+            code: "cardinalityMaxExceeded",
+            relationship: r.id,
+            entity: r.to,
+            value: `${countIn} > ${fromMax}`,
+          });
+        }
       }
     }
   }

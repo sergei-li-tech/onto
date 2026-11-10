@@ -24,10 +24,7 @@ const initialDoc: Ontology = {
       from: "customer",
       to: "order",
       name: "places",
-      from_min: "1",
-      from_max: "1",
-      to_min: "0",
-      to_max: "many",
+      cardinality: "0..*",
     },
   ],
   actions: [

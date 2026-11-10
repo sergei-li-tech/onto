@@ -13,7 +13,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type { Ontology } from "../types";
-import { formatCardinality } from "../lib/cardinality";
+import { formatCardinality, getRelationshipBounds } from "../lib/cardinality";
 import { layoutPositions } from "../lib/layoutElk";
 import { useOntologyStore } from "../store";
 import { EntityNode } from "./EntityNode";
@@ -66,19 +66,22 @@ function buildFlowEdges(
   doc: Ontology,
   selection: ReturnType<typeof useOntologyStore.getState>["selection"],
 ): Edge[] {
-  return doc.relationships.map((r) => ({
-    id: r.id,
-    source: r.from,
-    target: r.to,
-    type: "relationship",
-    data: {
-      name: r.name,
-      fromMark: formatCardinality(r.from_min, r.from_max),
-      toMark: formatCardinality(r.to_min, r.to_max),
-    },
-    animated: selection?.kind === "relationship" && selection.id === r.id,
-    style: { stroke: "#64748b" },
-  }));
+  return doc.relationships.map((r) => {
+    const { from_min, from_max, to_min, to_max } = getRelationshipBounds(r.cardinality);
+    return {
+      id: r.id,
+      source: r.from,
+      target: r.to,
+      type: "relationship",
+      data: {
+        name: r.name,
+        fromMark: formatCardinality(from_min, from_max),
+        toMark: formatCardinality(to_min, to_max),
+      },
+      animated: selection?.kind === "relationship" && selection.id === r.id,
+      style: { stroke: "#64748b" },
+    };
+  });
 }
 
 export function OntologyGraph({ doc }: { doc: Ontology }) {

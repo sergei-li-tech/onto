@@ -22,40 +22,37 @@ const link = (id: string, name: string): Relationship => ({
   from: "client",
   to: "visit",
   name,
-  from_min: "1",
-  from_max: "1",
-  to_min: "0",
-  to_max: "many",
+  cardinality: "0..*",
 });
 
 describe("operationsInRelationshipScope", () => {
-  it("keeps the link word and counts, and drops the ends", () => {
+  it("keeps the link word and cardinality, and drops the ends", () => {
     const kept = operationsInRelationshipScope("rel-old", [
       {
         op: "update_relationship",
         id: "rel-old",
-        patch: { name: "provides", from_min: "0", to_max: "many", from: "other", to: "other" },
+        patch: { name: "provides", cardinality: "0..1", from: "other", to: "other" },
       },
       { op: "update_relationship", id: "rel-other", patch: { name: "no" } },
       { op: "add_entity", entity: { id: "order" } },
-      { op: "update_relationship", id: "rel-old", patch: { from_min: "2" } },
+      { op: "update_relationship", id: "rel-old", patch: { invalid_key: "2" } },
     ]);
     expect(kept).toEqual([
       {
         op: "update_relationship",
         id: "rel-old",
-        patch: { name: "provides", from_min: "0", to_max: "many" },
+        patch: { name: "provides", cardinality: "0..1" },
       },
     ]);
   });
 
-  it("applies the kept counts without moving the link", () => {
+  it("applies the kept cardinality without moving the link", () => {
     const doc = docWith([link("rel-old", "provides")]);
     const ops = operationsInRelationshipScope("rel-old", [
       {
         op: "update_relationship",
         id: "rel-old",
-        patch: { from_min: "0", from_max: "1", to_min: "0", to_max: "1", from: "other" },
+        patch: { cardinality: "0..1", from: "other" },
       },
     ]);
     const next = applyOperations(doc, ops);
@@ -64,10 +61,7 @@ describe("operationsInRelationshipScope", () => {
       from: "client",
       to: "visit",
       name: "provides",
-      from_min: "0",
-      from_max: "1",
-      to_min: "0",
-      to_max: "1",
+      cardinality: "0..1",
     });
   });
 });
@@ -84,10 +78,11 @@ describe("relationshipIdAfterApply", () => {
     );
   });
 
-  it("keeps the id when only the counts change", () => {
+  it("keeps the id when only the cardinality changes", () => {
     const doc = docWith([link("rel-old", "provides")]);
-    const ops = [{ op: "update_relationship", id: "rel-old", patch: { from_min: "0" } }];
+    const ops = [{ op: "update_relationship", id: "rel-old", patch: { cardinality: "1..*" } }];
     const next = applyOperations(doc, ops);
     expect(relationshipIdAfterApply(doc, next, "rel-old", ops)).toBe("rel-old");
+    expect(next.relationships[0]?.cardinality).toBe("1..*");
   });
 });

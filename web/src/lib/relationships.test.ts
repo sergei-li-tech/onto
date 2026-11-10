@@ -21,10 +21,7 @@ const link = (id: string, name: string): Relationship => ({
   from: "client",
   to: "visit",
   name,
-  from_min: "1",
-  from_max: "1",
-  to_min: "0",
-  to_max: "many",
+  cardinality: "0..*",
 });
 
 describe("renameRelationshipInDocument", () => {

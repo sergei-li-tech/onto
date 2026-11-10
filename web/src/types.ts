@@ -31,16 +31,14 @@ export interface Entity {
   attributes: Attribute[];
 }
 
+export type CardinalitySpec = string | { from?: string; to?: string };
+
 export interface Relationship {
   id: string;
   from: string;
   to: string;
   name: string;
-  cardinality?: string | { from?: string; to?: string };
-  from_min: Cardinality;
-  from_max: Cardinality;
-  to_min: Cardinality;
-  to_max: Cardinality;
+  cardinality: CardinalitySpec;
   notes?: string;
 }
 

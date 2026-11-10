@@ -138,10 +138,7 @@ describe("applyOperations", () => {
           from: "client",
           to: "order-item",
           name: "contains",
-          from_min: "0",
-          from_max: "many",
-          to_min: "0",
-          to_max: "many",
+          cardinality: "0..*",
         },
       },
     ]);

@@ -129,10 +129,7 @@ describe("display name", () => {
       from: "visit",
       to: "client",
       name: "for",
-      from_min: "0",
-      from_max: "many",
-      to_min: "1",
-      to_max: "1",
+      cardinality: { from: "0..*", to: "1" },
     });
     doc.layout = { nodes: [{ id: "client", x: 10, y: 20 }] };
 
@@ -189,10 +186,7 @@ describe("schema rejection", () => {
       from: "missing",
       to: "client",
       name: "test",
-      from_min: "1",
-      from_max: "1",
-      to_min: "0",
-      to_max: "many",
+      cardinality: "0..*",
     });
     const errors = validateOntology(doc);
     expect(
@@ -215,10 +209,7 @@ describe("schema rejection", () => {
       from: "client",
       to: "order",
       name: "places",
-      from_min: "1",
-      from_max: "1",
-      to_min: "0",
-      to_max: "*",
+      cardinality: "0..*",
     });
 
     const yaml = serializeOntology(doc);
@@ -230,10 +221,7 @@ describe("schema rejection", () => {
 
     const reloaded = parseOntologyYaml(yaml);
     expect(reloaded.relationships).toHaveLength(1);
-    expect(reloaded.relationships[0]?.from_min).toBe("1");
-    expect(reloaded.relationships[0]?.from_max).toBe("1");
-    expect(reloaded.relationships[0]?.to_min).toBe("0");
-    expect(reloaded.relationships[0]?.to_max).toBe("*");
+    expect(reloaded.relationships[0]?.cardinality).toBe("0..*");
     expect(validateOntology(reloaded)).toEqual([]);
   });
 
@@ -250,10 +238,7 @@ describe("schema rejection", () => {
       from: "client",
       to: "department",
       name: "belongs_to",
-      from_min: "0",
-      from_max: "1",
-      to_min: "1",
-      to_max: "*",
+      cardinality: { from: "0..1", to: "1..*" },
     });
 
     const yaml = serializeOntology(doc);
@@ -262,10 +247,7 @@ describe("schema rejection", () => {
     expect(yaml).toContain("to: 1..*");
 
     const reloaded = parseOntologyYaml(yaml);
-    expect(reloaded.relationships[0]?.from_min).toBe("0");
-    expect(reloaded.relationships[0]?.from_max).toBe("1");
-    expect(reloaded.relationships[0]?.to_min).toBe("1");
-    expect(reloaded.relationships[0]?.to_max).toBe("*");
+    expect(reloaded.relationships[0]?.cardinality).toEqual({ from: "0..1", to: "1..*" });
     expect(validateOntology(reloaded)).toEqual([]);
   });
 });
