@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Entity, InvariantSourceType, Ontology, RiskLevel } from "../types";
+import type { Entity, InvariantSourceType, Ontology, Relationship, RiskLevel } from "../types";
 import { useOntologyStore } from "../store";
 import { EntityAssistant, RelationshipAssistant } from "./AiChatPanel";
 import { CommaListInput } from "./CommaListInput";
@@ -7,6 +7,11 @@ import { NotesField } from "./NotesField";
 import { EntityAttributesSection } from "./EntityAttributesSection";
 import { InfoTip } from "./InfoTip";
 import { editActionPhrase, setActionRule } from "../lib/sideLists";
+import {
+  CARDINALITY_PRESETS,
+  isCardinalityBoundValid,
+  normalizeBound,
+} from "../lib/cardinality";
 import { useT } from "../i18n";
 
 export function DetailPanel({ doc }: { doc: Ontology }) {
@@ -24,6 +29,10 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   const [nameDraft, setNameDraft] = useState("");
   const [uniqueIdDraft, setUniqueIdDraft] = useState("");
   const [relNameDraft, setRelNameDraft] = useState("");
+  const [fromMinDraft, setFromMinDraft] = useState("");
+  const [fromMaxDraft, setFromMaxDraft] = useState("");
+  const [toMinDraft, setToMinDraft] = useState("");
+  const [toMaxDraft, setToMaxDraft] = useState("");
   const [invStatementDraft, setInvStatementDraft] = useState("");
   const [invSourceDraft, setInvSourceDraft] = useState("");
 
@@ -34,9 +43,10 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
     : undefined;
 
   const selectedRelId = selection?.kind === "relationship" ? selection.id : null;
-  const selectedRelName = selectedRelId
-    ? doc.relationships.find((r) => r.id === selectedRelId)?.name
+  const selectedRel = selectedRelId
+    ? doc.relationships.find((r) => r.id === selectedRelId)
     : undefined;
+  const selectedRelName = selectedRel?.name;
 
   const selectedActionId = selection?.kind === "action" ? selection.id : null;
   const selectedAction = selectedActionId
@@ -75,6 +85,19 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   useEffect(() => {
     setRelNameDraft(selectedRelName ?? "");
   }, [selectedRelId, selectedRelName]);
+
+  useEffect(() => {
+    setFromMinDraft(selectedRel?.from_min ?? "1");
+    setFromMaxDraft(selectedRel?.from_max ?? "1");
+    setToMinDraft(selectedRel?.to_min ?? "0");
+    setToMaxDraft(selectedRel?.to_max ?? "*");
+  }, [
+    selectedRelId,
+    selectedRel?.from_min,
+    selectedRel?.from_max,
+    selectedRel?.to_min,
+    selectedRel?.to_max,
+  ]);
 
   useEffect(() => {
     setInvStatementDraft(selectedInvariant?.statement ?? "");
@@ -471,6 +494,172 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
                   if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                 }}
               />
+            </div>
+
+            <div className="cardinality-group">
+              <label className="group-label">
+                {t("detail.cardinalitySource", { name: fromName })}
+              </label>
+              <div className="cardinality-presets">
+                {CARDINALITY_PRESETS.map((p) => {
+                  const active =
+                    normalizeBound(rel.from_min) === p.min &&
+                    normalizeBound(rel.from_max) === p.max;
+                  return (
+                    <button
+                      key={p.label}
+                      type="button"
+                      className={`cardinality-preset-btn ${active ? "active" : ""}`}
+                      onClick={() =>
+                        patchDoc((d) => ({
+                          ...d,
+                          relationships: d.relationships.map((r) =>
+                            r.id === rel.id
+                              ? { ...r, from_min: p.min, from_max: p.max }
+                              : r,
+                          ),
+                        }))
+                      }
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="cardinality-inputs">
+                <div className="field">
+                  <label htmlFor={`rel-from-min-${rel.id}`}>{t("detail.cardinalityMin")}</label>
+                  <input
+                    id={`rel-from-min-${rel.id}`}
+                    value={fromMinDraft}
+                    onChange={(e) => setFromMinDraft(e.target.value)}
+                    onBlur={() => {
+                      const val = fromMinDraft.trim();
+                      if (val && isCardinalityBoundValid(val)) {
+                        patchDoc((d) => ({
+                          ...d,
+                          relationships: d.relationships.map((r) =>
+                            r.id === rel.id ? { ...r, from_min: val } : r,
+                          ),
+                        }));
+                      } else {
+                        setFromMinDraft(rel.from_min ?? "1");
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                    }}
+                  />
+                </div>
+                <span className="cardinality-separator">..</span>
+                <div className="field">
+                  <label htmlFor={`rel-from-max-${rel.id}`}>{t("detail.cardinalityMax")}</label>
+                  <input
+                    id={`rel-from-max-${rel.id}`}
+                    value={fromMaxDraft}
+                    onChange={(e) => setFromMaxDraft(e.target.value)}
+                    onBlur={() => {
+                      const val = fromMaxDraft.trim();
+                      if (val && isCardinalityBoundValid(val)) {
+                        patchDoc((d) => ({
+                          ...d,
+                          relationships: d.relationships.map((r) =>
+                            r.id === rel.id ? { ...r, from_max: val } : r,
+                          ),
+                        }));
+                      } else {
+                        setFromMaxDraft(rel.from_max ?? "1");
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="cardinality-group">
+              <label className="group-label">
+                {t("detail.cardinalityTarget", { name: toName })}
+              </label>
+              <div className="cardinality-presets">
+                {CARDINALITY_PRESETS.map((p) => {
+                  const active =
+                    normalizeBound(rel.to_min) === p.min &&
+                    normalizeBound(rel.to_max) === p.max;
+                  return (
+                    <button
+                      key={p.label}
+                      type="button"
+                      className={`cardinality-preset-btn ${active ? "active" : ""}`}
+                      onClick={() =>
+                        patchDoc((d) => ({
+                          ...d,
+                          relationships: d.relationships.map((r) =>
+                            r.id === rel.id
+                              ? { ...r, to_min: p.min, to_max: p.max }
+                              : r,
+                          ),
+                        }))
+                      }
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="cardinality-inputs">
+                <div className="field">
+                  <label htmlFor={`rel-to-min-${rel.id}`}>{t("detail.cardinalityMin")}</label>
+                  <input
+                    id={`rel-to-min-${rel.id}`}
+                    value={toMinDraft}
+                    onChange={(e) => setToMinDraft(e.target.value)}
+                    onBlur={() => {
+                      const val = toMinDraft.trim();
+                      if (val && isCardinalityBoundValid(val)) {
+                        patchDoc((d) => ({
+                          ...d,
+                          relationships: d.relationships.map((r) =>
+                            r.id === rel.id ? { ...r, to_min: val } : r,
+                          ),
+                        }));
+                      } else {
+                        setToMinDraft(rel.to_min ?? "0");
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                    }}
+                  />
+                </div>
+                <span className="cardinality-separator">..</span>
+                <div className="field">
+                  <label htmlFor={`rel-to-max-${rel.id}`}>{t("detail.cardinalityMax")}</label>
+                  <input
+                    id={`rel-to-max-${rel.id}`}
+                    value={toMaxDraft}
+                    onChange={(e) => setToMaxDraft(e.target.value)}
+                    onBlur={() => {
+                      const val = toMaxDraft.trim();
+                      if (val && isCardinalityBoundValid(val)) {
+                        patchDoc((d) => ({
+                          ...d,
+                          relationships: d.relationships.map((r) =>
+                            r.id === rel.id ? { ...r, to_max: val } : r,
+                          ),
+                        }));
+                      } else {
+                        setToMaxDraft(rel.to_max ?? "*");
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                    }}
+                  />
+                </div>
+              </div>
             </div>
             <NotesField
               id={`rel-notes-${rel.id}`}

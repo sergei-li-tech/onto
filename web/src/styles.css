@@ -453,9 +453,20 @@ body {
   line-height: 1.2;
   color: #334155;
   background: #f8fafc;
-  padding: 0 3px;
+  padding: 1px 4px;
   border-radius: 4px;
-  pointer-events: none;
+  border: 1px solid #e2e8f0;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.edge-mark:hover,
+.edge-name:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #cbd5e1;
 }
 
 .edge-name {
@@ -611,6 +622,64 @@ body {
 .field textarea {
   min-height: 72px;
   resize: vertical;
+}
+
+.cardinality-group {
+  margin-bottom: 14px;
+}
+
+.cardinality-group label.group-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.cardinality-presets {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.cardinality-preset-btn {
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  font-family: inherit;
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.cardinality-preset-btn:hover {
+  background: #e2e8f0;
+}
+
+.cardinality-preset-btn.active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.cardinality-inputs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cardinality-inputs .field {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.cardinality-separator {
+  color: #64748b;
+  font-weight: bold;
+  padding-top: 18px;
 }
 
 .phrase-row,

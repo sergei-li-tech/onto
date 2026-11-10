@@ -201,4 +201,71 @@ describe("schema rejection", () => {
       ),
     ).toBe(true);
   });
+
+  it("serializes and parses compact cardinality in YAML", () => {
+    const text = readFileSync(join(templatesDir, "generic.yaml"), "utf8");
+    const doc = parseOntologyYaml(text);
+    doc.entities.push({
+      id: "order",
+      name: "Order",
+      attributes: [],
+    });
+    doc.relationships.push({
+      id: "places",
+      from: "client",
+      to: "order",
+      name: "places",
+      from_min: "1",
+      from_max: "1",
+      to_min: "0",
+      to_max: "*",
+    });
+
+    const yaml = serializeOntology(doc);
+    expect(yaml).toContain("cardinality: 0..*");
+    expect(yaml).not.toContain("from_min");
+    expect(yaml).not.toContain("from_max");
+    expect(yaml).not.toContain("to_min");
+    expect(yaml).not.toContain("to_max");
+
+    const reloaded = parseOntologyYaml(yaml);
+    expect(reloaded.relationships).toHaveLength(1);
+    expect(reloaded.relationships[0]?.from_min).toBe("1");
+    expect(reloaded.relationships[0]?.from_max).toBe("1");
+    expect(reloaded.relationships[0]?.to_min).toBe("0");
+    expect(reloaded.relationships[0]?.to_max).toBe("*");
+    expect(validateOntology(reloaded)).toEqual([]);
+  });
+
+  it("supports bidirectional cardinality objects in YAML", () => {
+    const text = readFileSync(join(templatesDir, "generic.yaml"), "utf8");
+    const doc = parseOntologyYaml(text);
+    doc.entities.push({
+      id: "department",
+      name: "Department",
+      attributes: [],
+    });
+    doc.relationships.push({
+      id: "belongs_to",
+      from: "client",
+      to: "department",
+      name: "belongs_to",
+      from_min: "0",
+      from_max: "1",
+      to_min: "1",
+      to_max: "*",
+    });
+
+    const yaml = serializeOntology(doc);
+    expect(yaml).toContain("cardinality:\n");
+    expect(yaml).toContain("from: 0..1");
+    expect(yaml).toContain("to: 1..*");
+
+    const reloaded = parseOntologyYaml(yaml);
+    expect(reloaded.relationships[0]?.from_min).toBe("0");
+    expect(reloaded.relationships[0]?.from_max).toBe("1");
+    expect(reloaded.relationships[0]?.to_min).toBe("1");
+    expect(reloaded.relationships[0]?.to_max).toBe("*");
+    expect(validateOntology(reloaded)).toEqual([]);
+  });
 });

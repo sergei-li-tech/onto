@@ -21,8 +21,14 @@ export function operationsInRelationshipScope(
     const patch = op.patch;
     if (!patch || typeof patch !== "object") continue;
     const source = patch as Record<string, unknown>;
-    const nextPatch: Record<string, string> = {};
+    const nextPatch: Record<string, unknown> = {};
     if (typeof source.name === "string" && source.name.trim()) nextPatch.name = source.name;
+    if (
+      typeof source.cardinality === "string" ||
+      (source.cardinality && typeof source.cardinality === "object")
+    ) {
+      nextPatch.cardinality = source.cardinality;
+    }
     for (const key of ["from_min", "from_max", "to_min", "to_max"] as const) {
       const value = source[key];
       if (typeof value === "string" && CARDINALITY.has(value)) nextPatch[key] = value;

@@ -1,4 +1,5 @@
 import type { Cardinality, Entity, Ontology, Relationship } from "../types";
+import { numericBound } from "./cardinality";
 
 function sanitizeToken(str: string): string {
   const cleaned = str.replace(/[^a-zA-Z0-9_]/g, "_");
@@ -10,32 +11,38 @@ function escapeLabel(str: string): string {
 }
 
 /**
- * Maps our cardinality (0 | 1 | many) to Mermaid ER notation:
+ * Maps our cardinality (0 | 1 | * | N..M) to Mermaid ER notation:
  * Left side (from):
  *   1..1 -> ||
  *   0..1 -> |o
- *   1..many -> }|
- *   0..many -> }o
+ *   1..* -> }|
+ *   0..* -> }o
  * Right side (to):
  *   1..1 -> ||
  *   0..1 -> o|
- *   1..many -> |{
- *   0..many -> o{
+ *   1..* -> |{
+ *   0..* -> o{
  */
-function erLeftSymbol(min: Cardinality, max: Cardinality): string {
-  if (min === "1" && max === "1") return "||";
-  if (min === "0" && max === "1") return "|o";
-  if (min === "1" && max === "many") return "}|";
-  if (min === "0" && max === "many") return "}o";
-  return "||";
+function erLeftSymbol(min?: Cardinality, max?: Cardinality): string {
+  const numMin = numericBound(min ?? "1");
+  const numMax = numericBound(max ?? "1");
+  const isZero = numMin === 0;
+  const isMany = numMax > 1;
+  if (isMany) {
+    return isZero ? "}o" : "}|";
+  }
+  return isZero ? "|o" : "||";
 }
 
-function erRightSymbol(min: Cardinality, max: Cardinality): string {
-  if (min === "1" && max === "1") return "||";
-  if (min === "0" && max === "1") return "o|";
-  if (min === "1" && max === "many") return "|{";
-  if (min === "0" && max === "many") return "o{";
-  return "o{";
+function erRightSymbol(min?: Cardinality, max?: Cardinality): string {
+  const numMin = numericBound(min ?? "0");
+  const numMax = numericBound(max ?? "*");
+  const isZero = numMin === 0;
+  const isMany = numMax > 1;
+  if (isMany) {
+    return isZero ? "o{" : "|{";
+  }
+  return isZero ? "o|" : "||";
 }
 
 /**

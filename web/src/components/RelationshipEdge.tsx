@@ -5,6 +5,7 @@ import {
   type Edge,
   type EdgeProps,
 } from "@xyflow/react";
+import { useOntologyStore } from "../store";
 
 export type RelationshipEdgeData = {
   name: string;
@@ -73,17 +74,34 @@ export function RelationshipEdge({
   const name = above(labelX, labelY, sourceX, sourceY, targetX, targetY);
   const to = above(toPoint.x, toPoint.y, sourceX, sourceY, targetX, targetY);
 
+  const selectThisEdge = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    useOntologyStore.getState().setSelection({ kind: "relationship", id });
+  };
+
   return (
     <>
       <BaseEdge id={id} path={edgePath} style={style} />
       <EdgeLabelRenderer>
-        <span className="edge-mark nodrag nopan" style={at(from.x, from.y)}>
+        <span
+          className="edge-mark nodrag nopan"
+          style={at(from.x, from.y)}
+          onClick={selectThisEdge}
+        >
           {data?.fromMark}
         </span>
-        <span className="edge-name nodrag nopan" style={at(name.x, name.y)}>
+        <span
+          className="edge-name nodrag nopan"
+          style={at(name.x, name.y)}
+          onClick={selectThisEdge}
+        >
           {data?.name}
         </span>
-        <span className="edge-mark nodrag nopan" style={at(to.x, to.y)}>
+        <span
+          className="edge-mark nodrag nopan"
+          style={at(to.x, to.y)}
+          onClick={selectThisEdge}
+        >
           {data?.toMark}
         </span>
       </EdgeLabelRenderer>

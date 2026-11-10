@@ -154,3 +154,107 @@ describe("action state message", () => {
     }
   });
 });
+
+describe("cardinality validation", () => {
+  const baseDoc: Ontology = {
+    domain: "cardinality_test",
+    version: "1.0.0",
+    notes: "",
+    entities: [
+      { id: "user", name: "User", attributes: [] },
+      { id: "post", name: "Post", attributes: [] },
+    ],
+    relationships: [],
+    actions: [],
+    invariants: [],
+    open_questions: [],
+    out_of_scope: [],
+  };
+
+  it("reports cardinalityFromMinGreaterThanMax when from_min > from_max", () => {
+    const doc: Ontology = {
+      ...baseDoc,
+      relationships: [
+        {
+          id: "rel1",
+          from: "user",
+          to: "post",
+          name: "authors",
+          from_min: "2",
+          from_max: "1",
+          to_min: "0",
+          to_max: "*",
+        },
+      ],
+    };
+    const issues = validateOntology(doc);
+    const issue = only(issues, "cardinalityFromMinGreaterThanMax");
+    expect(issue.relationship).toBe("rel1");
+    expect(issue.value).toBe("2..1");
+
+    const msgEn = formatValidationIssue(issue, (k, v) => translate("en", k, v));
+    expect(msgEn).toContain("source cardinality min is greater than max");
+    expect(msgEn).not.toMatch(/\{\{/);
+  });
+
+  it("reports cardinalityToMinGreaterThanMax when to_min > to_max", () => {
+    const doc: Ontology = {
+      ...baseDoc,
+      relationships: [
+        {
+          id: "rel1",
+          from: "user",
+          to: "post",
+          name: "authors",
+          from_min: "0",
+          from_max: "1",
+          to_min: "5",
+          to_max: "2",
+        },
+      ],
+    };
+    const issues = validateOntology(doc);
+    const issue = only(issues, "cardinalityToMinGreaterThanMax");
+    expect(issue.relationship).toBe("rel1");
+    expect(issue.value).toBe("5..2");
+
+    const msgRu = formatValidationIssue(issue, (k, v) => translate("ru", k, v));
+    expect(msgRu).toContain("минимальная кардинальность цели больше максимальной");
+    expect(msgRu).not.toMatch(/\{\{/);
+  });
+
+  it("reports cardinalityMaxExceeded when actual edges exceed max bound", () => {
+    const doc: Ontology = {
+      ...baseDoc,
+      relationships: [
+        {
+          id: "rel1",
+          from: "user",
+          to: "post",
+          name: "writes",
+          from_min: "0",
+          from_max: "1",
+          to_min: "0",
+          to_max: "1",
+        },
+        {
+          id: "rel2",
+          from: "user",
+          to: "post",
+          name: "writes",
+          from_min: "0",
+          from_max: "1",
+          to_min: "0",
+          to_max: "1",
+        },
+      ],
+    };
+    const issues = validateOntology(doc);
+    const maxExceeded = issues.filter((i) => i.code === "cardinalityMaxExceeded");
+    expect(maxExceeded.length).toBeGreaterThanOrEqual(1);
+
+    const msgKo = formatValidationIssue(maxExceeded[0]!, (k, v) => translate("ko", k, v));
+    expect(msgKo).toContain("최대 관계 수를 초과했습니다");
+    expect(msgKo).not.toMatch(/\{\{/);
+  });
+});

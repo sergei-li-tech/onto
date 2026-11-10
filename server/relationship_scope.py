@@ -88,10 +88,13 @@ def _trim_relationship_op(op: Any, relationship_id: str) -> dict[str, Any] | Non
     patch = op.get("patch")
     if not isinstance(patch, dict):
         return None
-    next_patch: dict[str, str] = {}
+    next_patch: dict[str, Any] = {}
     name = patch.get("name")
     if isinstance(name, str) and name.strip():
         next_patch["name"] = name
+    cardinality = patch.get("cardinality")
+    if isinstance(cardinality, (str, dict)):
+        next_patch["cardinality"] = cardinality
     for key in ("from_min", "from_max", "to_min", "to_max"):
         value = patch.get(key)
         if isinstance(value, str) and value in CARDINALITY:

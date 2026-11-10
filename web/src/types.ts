@@ -1,4 +1,4 @@
-export type Cardinality = "0" | "1" | "many";
+export type Cardinality = string;
 
 export type AttributeType =
   | "string"
@@ -36,6 +36,7 @@ export interface Relationship {
   from: string;
   to: string;
   name: string;
+  cardinality?: string | { from?: string; to?: string };
   from_min: Cardinality;
   from_max: Cardinality;
   to_min: Cardinality;

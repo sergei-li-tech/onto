@@ -2,6 +2,7 @@ import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import schema from "../../../schema/ontology.schema.json";
 import type { Ontology } from "../types";
+import { isCardinalityRangeValid, numericBound, parseCardinalitySpec } from "./cardinality";
 
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
@@ -116,6 +117,64 @@ export function validateOntology(doc: Ontology): ValidationIssue[] {
     }
     if (!entityIds.has(r.to)) {
       errors.push({ code: "relationshipUnknownTo", relationship: r.id, value: r.to });
+    }
+    let fromMin = r.from_min;
+    let fromMax = r.from_max;
+    let toMin = r.to_min;
+    let toMax = r.to_max;
+    if ((fromMin === undefined || toMax === undefined) && r.cardinality) {
+      const parsed = parseCardinalitySpec(r.cardinality);
+      if (parsed) {
+        fromMin = parsed.from_min;
+        fromMax = parsed.from_max;
+        toMin = parsed.to_min;
+        toMax = parsed.to_max;
+      }
+    }
+
+    if (fromMin !== undefined && fromMax !== undefined && !isCardinalityRangeValid(fromMin, fromMax)) {
+      errors.push({
+        code: "cardinalityFromMinGreaterThanMax",
+        relationship: r.id,
+        value: `${fromMin}..${fromMax}`,
+      });
+    }
+    if (toMin !== undefined && toMax !== undefined && !isCardinalityRangeValid(toMin, toMax)) {
+      errors.push({
+        code: "cardinalityToMinGreaterThanMax",
+        relationship: r.id,
+        value: `${toMin}..${toMax}`,
+      });
+    }
+
+    const maxTo = toMax !== undefined ? numericBound(toMax) : NaN;
+    if (!Number.isNaN(maxTo) && maxTo < Infinity) {
+      const countOut = doc.relationships.filter(
+        (other) => other.from === r.from && other.name === r.name,
+      ).length;
+      if (countOut > maxTo) {
+        errors.push({
+          code: "cardinalityMaxExceeded",
+          relationship: r.id,
+          entity: r.from,
+          value: `${countOut} > ${toMax}`,
+        });
+      }
+    }
+
+    const maxFrom = fromMax !== undefined ? numericBound(fromMax) : NaN;
+    if (!Number.isNaN(maxFrom) && maxFrom < Infinity) {
+      const countIn = doc.relationships.filter(
+        (other) => other.to === r.to && other.name === r.name,
+      ).length;
+      if (countIn > maxFrom) {
+        errors.push({
+          code: "cardinalityMaxExceeded",
+          relationship: r.id,
+          entity: r.to,
+          value: `${countIn} > ${fromMax}`,
+        });
+      }
     }
   }
 

@@ -2,6 +2,7 @@ import type { Attribute, Entity, Ontology, Relationship } from "../types";
 import { renameAttributeInEntity, uniqueAttributeId, uniqueEntityId } from "./autoIds";
 import { coerceSnakeId } from "./ids";
 import { renameRelationshipInDocument } from "./relationships";
+import { parseCardinalitySpec } from "./cardinality";
 
 export type OntologyOperation =
   | { op: "add_entity"; entity: Entity }
@@ -185,6 +186,15 @@ export function applyOperations(doc: Ontology, rawOps: unknown[]): Ontology {
         if (!current) break;
         const { name: nextName, ...rest } = op.patch;
         const patched = { ...current, ...rest, id: current.id, name: current.name };
+        if (op.patch.cardinality) {
+          const parsed = parseCardinalitySpec(op.patch.cardinality);
+          if (parsed) {
+            patched.from_min = parsed.from_min;
+            patched.from_max = parsed.from_max;
+            patched.to_min = parsed.to_min;
+            patched.to_max = parsed.to_max;
+          }
+        }
         next = {
           ...next,
           relationships: next.relationships.map((r) => (r.id === op.id ? patched : r)),

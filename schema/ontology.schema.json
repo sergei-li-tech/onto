@@ -72,9 +72,34 @@
     "layout": { "$ref": "#/$defs/layout" }
   },
   "$defs": {
-    "cardinality": {
+    "cardinalityBound": {
       "type": "string",
-      "enum": ["0", "1", "many"]
+      "pattern": "^([0-9]+|\\*|many)$",
+      "description": "Cardinality boundary: non-negative integer (0, 1, 2...), '*' or 'many' for unbounded."
+    },
+    "cardinality": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^([0-9]+|\\*|many)(\\.\\.([0-9]+|\\*|many))?((\\s*->\\s*([0-9]+|\\*|many)(\\.\\.([0-9]+|\\*|many))?))?$",
+          "description": "Cardinality range: '0..*', '1..*', '0..1', '1', or directed '1..1 -> 0..*'."
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "from": {
+              "type": "string",
+              "pattern": "^([0-9]+|\\*|many)(\\.\\.([0-9]+|\\*|many))?$"
+            },
+            "to": {
+              "type": "string",
+              "pattern": "^([0-9]+|\\*|many)(\\.\\.([0-9]+|\\*|many))?$"
+            }
+          },
+          "description": "Explicit bidirectional cardinality object with from and to bounds."
+        }
+      ]
     },
     "attributeType": {
       "type": "string",
@@ -144,11 +169,7 @@
         "id",
         "from",
         "to",
-        "name",
-        "from_min",
-        "from_max",
-        "to_min",
-        "to_max"
+        "name"
       ],
       "additionalProperties": false,
       "properties": {
@@ -156,10 +177,11 @@
         "from": { "type": "string", "minLength": 1 },
         "to": { "type": "string", "minLength": 1 },
         "name": { "type": "string", "minLength": 1 },
-        "from_min": { "$ref": "#/$defs/cardinality" },
-        "from_max": { "$ref": "#/$defs/cardinality" },
-        "to_min": { "$ref": "#/$defs/cardinality" },
-        "to_max": { "$ref": "#/$defs/cardinality" },
+        "cardinality": { "$ref": "#/$defs/cardinality" },
+        "from_min": { "$ref": "#/$defs/cardinalityBound" },
+        "from_max": { "$ref": "#/$defs/cardinalityBound" },
+        "to_min": { "$ref": "#/$defs/cardinalityBound" },
+        "to_max": { "$ref": "#/$defs/cardinalityBound" },
         "notes": { "type": "string" }
       }
     },
