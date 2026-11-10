@@ -1,7 +1,9 @@
 import { Document, YAMLMap, isMap, isScalar, isSeq, parseDocument } from "yaml";
 import type {
   Action,
+  ActionInput,
   Attribute,
+  AttributeType,
   Entity,
   Invariant,
   InvariantSourceType,
@@ -195,6 +197,18 @@ function parseRelationship(raw: unknown): Relationship {
   return rel;
 }
 
+function actionInputToPlain(i: ActionInput): Record<string, unknown> {
+  const out: Record<string, unknown> = {
+    name: i.name,
+    type: i.type,
+  };
+  if (i.required !== undefined) out.required = i.required;
+  if (i.description?.trim()) out.description = i.description.trim();
+  if (i.values && i.values.length > 0) out.values = i.values;
+  if (i.entity) out.entity = i.entity;
+  return out;
+}
+
 function actionToPlain(a: Action): Record<string, unknown> {
   const out: Record<string, unknown> = { id: a.id, name: a.name };
   if (a.entity) out.entity = a.entity;
@@ -203,7 +217,29 @@ function actionToPlain(a: Action): Record<string, unknown> {
   if (a.requires_confirmation !== undefined) out.requires_confirmation = a.requires_confirmation;
   if (a.warning_prompt?.trim()) out.warning_prompt = a.warning_prompt.trim();
   if (a.rule?.trim()) out.rule = a.rule.trim();
+  if (a.inputs && a.inputs.length > 0) {
+    out.inputs = a.inputs.map(actionInputToPlain);
+  }
   return out;
+}
+
+function parseActionInput(raw: unknown): ActionInput {
+  if (!isMap(raw)) throw new Error("Action input must be an object");
+  const input: ActionInput = {
+    name: asString(raw.get("name"), "actions.inputs.name"),
+    type: asString(raw.get("type"), "actions.inputs.type") as AttributeType,
+  };
+  const req = raw.get("required");
+  if (req !== undefined) input.required = asBool(req, "actions.inputs.required");
+  const desc = raw.get("description");
+  if (desc !== undefined && desc !== null) {
+    input.description = asString(desc, "actions.inputs.description");
+  }
+  const values = raw.get("values");
+  if (isSeq(values)) input.values = values.toJSON() as string[];
+  const ent = raw.get("entity");
+  if (ent !== undefined && ent !== null) input.entity = asString(ent, "actions.inputs.entity");
+  return input;
 }
 
 function parseAction(raw: unknown): Action {
@@ -233,6 +269,10 @@ function parseAction(raw: unknown): Action {
   }
   const rule = raw.get("rule");
   if (rule !== undefined) action.rule = asString(rule, "actions.rule");
+  const inputs = raw.get("inputs");
+  if (isSeq(inputs)) {
+    action.inputs = inputs.items.map(parseActionInput);
+  }
   return action;
 }
 

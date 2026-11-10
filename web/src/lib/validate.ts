@@ -194,6 +194,29 @@ export function validateOntology(doc: Ontology): ValidationIssue[] {
         value: stateFields.join(", "),
       });
     }
+    if (a.inputs) {
+      const inputNames = new Set<string>();
+      for (const input of a.inputs) {
+        if (inputNames.has(input.name)) {
+          errors.push({ code: "duplicateActionInputName", action: a.id, value: input.name });
+        }
+        inputNames.add(input.name);
+        if (input.type === "enum" && (!input.values || input.values.length === 0)) {
+          errors.push({ code: "actionInputEnumValuesRequired", action: a.id, value: input.name });
+        }
+        if (input.type === "ref") {
+          if (!input.entity) {
+            errors.push({ code: "actionInputRefEntityRequired", action: a.id, value: input.name });
+          } else if (!allEntityIds.has(input.entity)) {
+            errors.push({
+              code: "actionInputRefEntityUnknown",
+              action: a.id,
+              value: input.entity,
+            });
+          }
+        }
+      }
+    }
     if (!a.entity) continue;
     if (!entityIds.has(a.entity)) {
       errors.push({ code: "actionUnknownEntity", action: a.id, value: a.entity });

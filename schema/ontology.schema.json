@@ -207,8 +207,40 @@
           "type": "string",
           "minLength": 1,
           "description": "Local execution condition: the action is blocked until the rule holds."
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/actionInput" },
+          "description": "Structured typed input parameters for tool calling / AI agent execution."
         }
       }
+    },
+    "actionInput": {
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "type": { "$ref": "#/$defs/attributeType" },
+        "required": { "type": "boolean" },
+        "description": { "type": "string" },
+        "values": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "entity": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "enum" } } },
+          "then": { "required": ["values"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "ref" } } },
+          "then": { "required": ["entity"] }
+        }
+      ]
     },
     "invariant": {
       "type": "object",

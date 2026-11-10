@@ -5,6 +5,7 @@ import { EntityAssistant, RelationshipAssistant } from "./AiChatPanel";
 import { CommaListInput } from "./CommaListInput";
 import { NotesField } from "./NotesField";
 import { EntityAttributesSection } from "./EntityAttributesSection";
+import { ActionInputsSection } from "./ActionInputsSection";
 import { InfoTip } from "./InfoTip";
 import { editActionPhrase, setActionRule } from "../lib/sideLists";
 import {
@@ -289,6 +290,13 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
       if (nextId !== action.id) setSelection({ kind: "action", id: nextId });
     }
 
+    function patchAction(updater: (a: Action) => Action) {
+      patchDoc((d) => ({
+        ...d,
+        actions: d.actions.map((a) => (a.id === action.id ? updater(a) : a)),
+      }));
+    }
+
     return (
       <aside className="detail">
         <DetailHead
@@ -453,6 +461,8 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
               {t("detail.deleteAction")}
             </button>
           </section>
+
+          <ActionInputsSection doc={doc} action={action} patchAction={patchAction} />
         </div>
       </aside>
     );

@@ -44,6 +44,15 @@ export interface Relationship {
 
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
 
+export interface ActionInput {
+  name: string;
+  type: AttributeType;
+  required?: boolean;
+  description?: string;
+  values?: string[];
+  entity?: string;
+}
+
 export interface Action {
   id: string;
   name: string;
@@ -57,6 +66,8 @@ export interface Action {
   warning_prompt?: string;
   /** Local execution condition: the action is blocked until it holds. Free text, no DSL. */
   rule?: string;
+  /** Structured typed input parameters for tool calling / AI agent execution. */
+  inputs?: ActionInput[];
 }
 
 export type InvariantSourceType = "doc" | "call" | "legal" | "system" | "other";
