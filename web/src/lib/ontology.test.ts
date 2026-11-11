@@ -39,6 +39,22 @@ describe("yaml round-trip", () => {
     expect(validateOntology(again)).toEqual([]);
   });
 
+  it("round-trips attribute pii flag", () => {
+    const text = readFileSync(join(templatesDir, "generic.yaml"), "utf8");
+    const doc = parseOntologyYaml(text);
+    doc.entities[0]!.attributes = [
+      { id: "tax_id", type: "string", name: "Tax identifier", required: true, pii: true },
+      { id: "comment", type: "string", name: "Public comment", required: false, pii: false },
+    ];
+    doc.entities[0]!.primary_key = "tax_id";
+    const serialized = serializeOntology(doc);
+    expect(serialized).toContain("pii: true");
+    const again = parseOntologyYaml(serialized);
+    expect(again.entities[0]?.attributes[0]?.pii).toBe(true);
+    expect(again.entities[0]?.attributes[1]?.pii).toBe(false);
+    expect(validateOntology(again)).toEqual([]);
+  });
+
   it("keeps stable top-level key order", () => {
     const text = readFileSync(join(templatesDir, "generic.yaml"), "utf8");
     const doc = parseOntologyYaml(text);

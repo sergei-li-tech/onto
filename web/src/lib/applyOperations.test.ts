@@ -171,4 +171,25 @@ describe("applyOperations", () => {
     expect(client?.primary_key).toBe("field_phone");
     expect(validateOntology(next)).toEqual([]);
   });
+
+  it("preserves pii flag on add_attribute and update_attribute", () => {
+    const doc = parseOntologyYaml(readFileSync(join(templatesDir, "generic.yaml"), "utf8"));
+    const next = applyOperations(doc, [
+      {
+        op: "add_attribute",
+        entity_id: "client",
+        attribute: { id: "passport", type: "string", name: "Passport", pii: true },
+      },
+      {
+        op: "update_attribute",
+        entity_id: "client",
+        attribute_id: "passport",
+        patch: { pii: true, required: true },
+      },
+    ]);
+    const client = next.entities.find((e) => e.id === "client");
+    expect(client?.attributes[0]?.pii).toBe(true);
+    expect(client?.attributes[0]?.required).toBe(true);
+    expect(validateOntology(next)).toEqual([]);
+  });
 });

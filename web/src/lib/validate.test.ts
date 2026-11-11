@@ -246,3 +246,46 @@ describe("cardinality validation", () => {
     expect(msgKo).not.toMatch(/\{\{/);
   });
 });
+
+describe("attribute pii flag validation", () => {
+  const baseDoc: Ontology = {
+    domain: "pii_test",
+    version: "1.0.0",
+    notes: "",
+    entities: [
+      {
+        id: "client",
+        name: "Client",
+        primary_key: "passport",
+        attributes: [
+          { id: "passport", type: "string", name: "Passport series and number", pii: true },
+        ],
+      },
+    ],
+    relationships: [],
+    actions: [],
+    invariants: [],
+    open_questions: [],
+    out_of_scope: [],
+  };
+
+  it("accepts boolean pii flag", () => {
+    expect(validateOntology(baseDoc)).toEqual([]);
+  });
+
+  it("rejects non-boolean pii value via schema", () => {
+    const invalidDoc = {
+      ...baseDoc,
+      entities: [
+        {
+          ...baseDoc.entities[0]!,
+          attributes: [
+            { id: "passport", type: "string", name: "Passport", pii: "true" },
+          ],
+        },
+      ],
+    } as unknown as Ontology;
+    const issues = validateOntology(invalidDoc);
+    expect(issues.some((i) => i.code === "schema" && i.path === "/entities/0/attributes/0/pii")).toBe(true);
+  });
+});

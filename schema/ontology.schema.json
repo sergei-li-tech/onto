@@ -119,6 +119,10 @@
         "type": { "$ref": "#/$defs/attributeType" },
         "name": { "type": "string", "minLength": 1 },
         "required": { "type": "boolean" },
+        "pii": {
+          "type": "boolean",
+          "description": "Marks attribute as containing Personally Identifiable Information (PII)."
+        },
         "values": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 },

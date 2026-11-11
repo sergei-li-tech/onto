@@ -42,7 +42,11 @@ function buildFlowNodes(
         label: e.name,
         uniqueIdentifier: e.unique_identifier?.trim() ?? "",
         aliases: e.aliases ?? [],
-        attributes: e.attributes.map((attr) => ({ id: attr.id, name: attr.name })),
+        attributes: e.attributes.map((attr) => ({
+          id: attr.id,
+          name: attr.name,
+          pii: attr.pii,
+        })),
         expanded,
         onToggle: () => onToggle(e.id),
       },

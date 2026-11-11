@@ -67,8 +67,8 @@ Allowed operations:
   Add elements to attributes only for fields explicitly named in the request.
 - {"op":"update_entity","id":"...","patch":{"name?","aliases?","template_name?","unique_identifier?"}}
 - {"op":"remove_entity","id":"..."}
-- {"op":"add_attribute","entity_id":"...","attribute":{"id","type","name","required?","values?","entity?"}}
-- {"op":"update_attribute","entity_id":"...","attribute_id":"...","patch":{"name?","type?","required?","values?","entity?"}}
+- {"op":"add_attribute","entity_id":"...","attribute":{"id","type","name","required?","pii?","values?","entity?"}}
+- {"op":"update_attribute","entity_id":"...","attribute_id":"...","patch":{"name?","type?","required?","pii?","values?","entity?"}}
 - {"op":"remove_attribute","entity_id":"...","attribute_id":"..."}
 - {"op":"add_relationship","relationship":{"id","from","to","name","cardinality"}}
   (cardinality: "0..*", "1..*", "0..1", "1..1", or {"from":"0..1","to":"0..*"})

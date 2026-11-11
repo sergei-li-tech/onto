@@ -133,6 +133,8 @@ export const ko: Dict = {
   "attributes.type": "유형",
   "attributes.fieldName": "필드 이름",
   "attributes.required": "필수 필드",
+  "attributes.pii": "개인정보 (PII)",
+  "attributes.piiInfo": "개인식별정보 (여권, 전화번호, 납세자 번호 등) — 런타임에서 이 데이터를 보호하거나 마스킹하도록 지시합니다.",
   "attributes.values": "값",
   "attributes.valuesInfo": "허용 값을 쉼표로 구분합니다.",
   "attributes.valuesPlaceholder": "신규, 확정, 취소",

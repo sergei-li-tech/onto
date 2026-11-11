@@ -6,7 +6,7 @@ export type EntityNodeData = {
   label: string;
   uniqueIdentifier: string;
   aliases: string[];
-  attributes: { id: string; name: string }[];
+  attributes: { id: string; name: string; pii?: boolean }[];
   expanded: boolean;
   onToggle: () => void;
 };
@@ -55,7 +55,8 @@ function EntityNodeComponent({ data }: NodeProps<EntityNodeData>) {
           ) : (
             data.attributes.map((attr) => (
               <li key={attr.id} className="entity-field-item">
-                {attr.name}
+                <span>{attr.name}</span>
+                {attr.pii && <span className="badge-pii">PII</span>}
               </li>
             ))
           )}

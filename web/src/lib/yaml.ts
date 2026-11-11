@@ -81,6 +81,7 @@ function attributeToPlain(a: Attribute): Record<string, unknown> {
     name: a.name,
   };
   if (a.required !== undefined) out.required = a.required;
+  if (a.pii !== undefined) out.pii = a.pii;
   if (a.values) out.values = a.values;
   if (a.entity) out.entity = a.entity;
   return out;
@@ -139,6 +140,8 @@ function parseAttribute(raw: unknown): Attribute {
   };
   const req = raw.get("required");
   if (req !== undefined) a.required = asBool(req, "attributes.required");
+  const pii = raw.get("pii");
+  if (pii !== undefined) a.pii = asBool(pii, "attributes.pii");
   const values = raw.get("values");
   if (isSeq(values)) a.values = values.toJSON() as string[];
   const ent = raw.get("entity");

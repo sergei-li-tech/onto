@@ -125,20 +125,36 @@ export function EntityAttributesSection({ doc, entity, patchEntity }: Props) {
             </select>
           </div>
           <div className="field">
-            <label>{t("attributes.fieldName")}</label>
+            <div className="field-label-row">
+              <label>{t("attributes.fieldName")}</label>
+              {attr.pii && <span className="badge-pii">PII</span>}
+            </div>
             <AttributeNameField
               name={attr.name}
               onCommit={(next) => commitAttributeName(attr.id, next)}
             />
           </div>
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={Boolean(attr.required)}
-              onChange={(e) => updateAttribute(attr.id, { required: e.target.checked })}
-            />
-            {t("attributes.required")}
-          </label>
+          <div className="attr-flags-row">
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={Boolean(attr.required)}
+                onChange={(e) => updateAttribute(attr.id, { required: e.target.checked })}
+              />
+              {t("attributes.required")}
+            </label>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={Boolean(attr.pii)}
+                onChange={(e) =>
+                  updateAttribute(attr.id, { pii: e.target.checked ? true : undefined })
+                }
+              />
+              {t("attributes.pii")}
+              <InfoTip text={t("attributes.piiInfo")} />
+            </label>
+          </div>
 
           {attr.type === "enum" && (
             <div className="field">

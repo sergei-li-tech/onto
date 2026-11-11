@@ -131,6 +131,8 @@ export const en = {
   "attributes.type": "Type",
   "attributes.fieldName": "Field name",
   "attributes.required": "Required field",
+  "attributes.pii": "PII (Personal data)",
+  "attributes.piiInfo": "Personally Identifiable Information (e.g. passport, phone, tax ID) — signals runtime to protect or mask this data.",
   "attributes.values": "Values",
   "attributes.valuesInfo": "Allowed values, comma-separated.",
   "attributes.valuesPlaceholder": "new, confirmed, cancelled",

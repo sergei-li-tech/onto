@@ -133,6 +133,8 @@ export const ru: Dict = {
   "attributes.type": "Тип",
   "attributes.fieldName": "Имя поля",
   "attributes.required": "Обязательное поле",
+  "attributes.pii": "ПДн (PII)",
+  "attributes.piiInfo": "Персональные данные (паспорт, телефон, ИНН) — сигнал для ИИ-агентов и логов маскировать/защищать эти данные.",
   "attributes.values": "Значения",
   "attributes.valuesInfo": "Допустимые значения через запятую.",
   "attributes.valuesPlaceholder": "новый, подтверждён, отменён",

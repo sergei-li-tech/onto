@@ -1090,6 +1090,14 @@ body {
   background: #f8fafc;
 }
 
+.entity-field-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  text-align: left;
+}
+
 .entity-field-empty {
   color: #64748b;
   font-style: italic;
@@ -1132,6 +1140,43 @@ body {
   gap: 8px;
   font-size: 0.875rem;
   margin-bottom: 10px;
+}
+
+.attr-flags-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.attr-flags-row .checkbox-row {
+  margin-bottom: 0;
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.field-label-row label {
+  margin-bottom: 0;
+}
+
+.badge-pii {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 4px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
 }
 
 .attr-remove {

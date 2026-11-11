@@ -15,6 +15,7 @@ export interface Attribute {
   type: AttributeType;
   name: string;
   required?: boolean;
+  pii?: boolean;
   values?: string[];
   entity?: string;
 }
