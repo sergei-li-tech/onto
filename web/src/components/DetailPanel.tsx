@@ -8,6 +8,7 @@ import { EntityAttributesSection } from "./EntityAttributesSection";
 import { ActionInputsSection } from "./ActionInputsSection";
 import { InfoTip } from "./InfoTip";
 import { editActionPhrase, setActionRule } from "../lib/sideLists";
+import { ActionTechnicalMappingCard, EntityTechnicalMappingCard } from "./TechnicalMappingDetail";
 import {
   CARDINALITY_PRESETS,
   formatCardinalitySpec,
@@ -27,6 +28,7 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
   const removeAction = useOntologyStore((s) => s.removeAction);
   const renameRelationshipName = useOntologyStore((s) => s.renameRelationshipName);
   const setSelection = useOntologyStore((s) => s.setSelection);
+  const viewMode = useOntologyStore((s) => s.viewMode);
   const t = useT();
 
   const [nameDraft, setNameDraft] = useState("");
@@ -134,6 +136,20 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
         ...d,
         entities: d.entities.map((en) => (en.id === entity.id ? updater(en) : en)),
       }));
+    }
+
+    if (viewMode === "technical") {
+      return (
+        <aside className="detail">
+          <DetailHead
+            title={t("mapping.entityMapping", { name: entity.name })}
+            hint={t("mapping.title")}
+          />
+          <div className="detail-body">
+            <EntityTechnicalMappingCard doc={doc} entity={entity} />
+          </div>
+        </aside>
+      );
     }
 
     return (
@@ -295,6 +311,20 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
         ...d,
         actions: d.actions.map((a) => (a.id === action.id ? updater(a) : a)),
       }));
+    }
+
+    if (viewMode === "technical") {
+      return (
+        <aside className="detail">
+          <DetailHead
+            title={t("mapping.actionMapping", { name: action.name })}
+            hint={t("mapping.title")}
+          />
+          <div className="detail-body">
+            <ActionTechnicalMappingCard doc={doc} action={action} />
+          </div>
+        </aside>
+      );
     }
 
     return (

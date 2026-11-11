@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/sergei-li-tech/onto/main/schema/technical_mapping.schema.json",
+  "title": "TechnicalMapping",
+  "type": "object",
+  "required": ["version", "binds_to"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Address of this JSON Schema."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "binds_to": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Bound business ontology and version, e.g. 'domain#1.0.0' or 'ontology.yaml#1.0.0'."
+    },
+    "infrastructure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "data_sources": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/dataSource"
+          }
+        },
+        "mcp_connectors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/mcpConnector"
+          }
+        }
+      }
+    },
+    "entity_mappings": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/entityMapping"
+      }
+    },
+    "action_mappings": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/actionMapping"
+      }
+    }
+  },
+  "$defs": {
+    "dataSource": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["postgresql", "snowflake", "openapi_v3", "rest", "custom"]
+        },
+        "dsn_env_var": { "type": "string" },
+        "warehouse": { "type": "string" },
+        "endpoint": { "type": "string" }
+      }
+    },
+    "mcpConnector": {
+      "type": "object",
+      "required": ["name", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "minLength": 1 }
+      }
+    },
+    "entityMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "system_of_record": { "type": "string" },
+        "table": { "type": "string" },
+        "field_mappings": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "actionMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "handler": { "type": "string" },
+        "mcp_connector": { "type": "string" },
+        "telemetry_sink": { "type": "string" }
+      }
+    }
+  }
+}
+

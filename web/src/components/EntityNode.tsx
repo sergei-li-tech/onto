@@ -6,9 +6,15 @@ export type EntityNodeData = {
   label: string;
   uniqueIdentifier: string;
   aliases: string[];
-  attributes: { id: string; name: string; pii?: boolean }[];
+  attributes: { id: string; name: string; pii?: boolean; mappedColumn?: string }[];
   expanded: boolean;
   onToggle: () => void;
+  isTechnicalMode?: boolean;
+  systemOfRecord?: string;
+  table?: string;
+  mappingStatus?: "complete" | "partial" | "unmapped";
+  mappedFieldsCount?: number;
+  totalFieldsCount?: number;
 };
 
 function EntityNodeComponent({ data }: NodeProps<EntityNodeData>) {
@@ -38,6 +44,22 @@ function EntityNodeComponent({ data }: NodeProps<EntityNodeData>) {
           {data.expanded ? "▾" : "▸"}
         </button>
       </div>
+      {data.isTechnicalMode ? (
+        <div
+          className="entity-tech-summary"
+          title={data.table ? `${data.systemOfRecord ?? "db"}.${data.table}` : "Unmapped"}
+        >
+          <span className={`status-icon status-${data.mappingStatus ?? "unmapped"}`}>
+            {data.mappingStatus === "complete" ? "🟢" : data.mappingStatus === "partial" ? "🟡" : "⚪"}
+          </span>
+          <span className={`entity-tech-table ${data.table ? "" : "unmapped"}`}>
+            {data.table ? data.table : "— unmapped —"}
+          </span>
+          <span className="entity-tech-count">
+            {data.mappedFieldsCount ?? 0}/{data.totalFieldsCount ?? 0}
+          </span>
+        </div>
+      ) : null}
       {data.uniqueIdentifier ? (
         <p className="entity-node-unique-id" title={t("detail.uniqueIdentifier")}>
           {data.uniqueIdentifier}
@@ -55,8 +77,15 @@ function EntityNodeComponent({ data }: NodeProps<EntityNodeData>) {
           ) : (
             data.attributes.map((attr) => (
               <li key={attr.id} className="entity-field-item">
-                <span>{attr.name}</span>
-                {attr.pii && <span className="badge-pii">PII</span>}
+                <div className="entity-field-name-wrap">
+                  <span>{attr.name}</span>
+                  {attr.pii && <span className="badge-pii">PII</span>}
+                </div>
+                {data.isTechnicalMode && (
+                  <span className={`attr-mapping-pill ${attr.mappedColumn ? "mapped" : "unmapped"}`}>
+                    {attr.mappedColumn ? `→ ${attr.mappedColumn}` : "—"}
+                  </span>
+                )}
               </li>
             ))
           )}

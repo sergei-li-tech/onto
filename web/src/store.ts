@@ -1,5 +1,15 @@
 import { create } from "zustand";
-import type { Ontology, Selection, TemplateId } from "./types";
+import type {
+  ActionMapping,
+  DataSource,
+  EntityMapping,
+  McpConnector,
+  Ontology,
+  Selection,
+  TechnicalMapping,
+  TemplateId,
+  ViewMode,
+} from "./types";
 import { entityIdFromName, repairOntologyIds } from "./lib/autoIds";
 import { nodePositionForFlowCenter } from "./lib/graphPlacement";
 import { slugIdFromText } from "./lib/ids";
@@ -11,6 +21,13 @@ import { cloneOntology } from "./lib/yaml";
 import { autoLayoutEntities } from "./lib/layoutElk";
 import { addActionPhrase, removeAction as removeActionPhrase, removeInvariant as removeInvariantPhrase } from "./lib/sideLists";
 import { clearDraftFromStorage, loadDraftFromStorage, saveDraftToStorage } from "./lib/autosave";
+import {
+  createDefaultTechnicalMapping,
+  migrateMappingOnActionRemove,
+  migrateMappingOnEntityRemove,
+  migrateMappingOnEntityRename,
+  validateTechnicalMapping,
+} from "./lib/technicalMapping";
 import { t } from "./i18n";
 
 const MAX_UNDO = 40;
@@ -62,6 +79,24 @@ type Store = {
   updateNodePosition: (entityId: string, x: number, y: number) => void;
   markSaved: () => void;
   backToStart: () => void;
+
+  viewMode: ViewMode;
+  mappingDoc: TechnicalMapping | null;
+  mappingFileHandle: FileSystemFileHandle | null;
+  mappingFileName: string | null;
+  mappingValidationErrors: ValidationIssue[];
+
+  setViewMode: (mode: ViewMode) => void;
+  loadMappingDocument: (mapping: TechnicalMapping, handle?: FileSystemFileHandle | null, name?: string | null) => void;
+  initTechnicalMapping: () => void;
+  patchMappingDoc: (updater: (m: TechnicalMapping) => TechnicalMapping) => void;
+  updateEntityMapping: (entityId: string, patch: Partial<EntityMapping>) => void;
+  updateEntityFieldMapping: (entityId: string, attrId: string, columnName: string) => void;
+  updateActionMapping: (actionId: string, patch: Partial<ActionMapping>) => void;
+  addDataSource: (name: string, ds: DataSource) => void;
+  removeDataSource: (name: string) => void;
+  addMcpConnector: (connector: McpConnector) => void;
+  removeMcpConnector: (name: string) => void;
 };
 
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -110,6 +145,11 @@ export const useOntologyStore = create<Store>((set, get) => {
     undoStack: [],
     redoStack: [],
     autosaveStatus: "idle",
+    viewMode: "business",
+    mappingDoc: null,
+    mappingFileHandle: null,
+    mappingFileName: null,
+    mappingValidationErrors: [],
 
     openTemplate: (_id, clientDomain) => {
       const doc = copyFromTemplate(clientDomain ?? "");
@@ -122,6 +162,11 @@ export const useOntologyStore = create<Store>((set, get) => {
         undoStack: [],
         redoStack: [],
         autosaveStatus: "idle",
+        viewMode: "business",
+        mappingDoc: null,
+        mappingFileHandle: null,
+        mappingFileName: null,
+        mappingValidationErrors: [],
         ...revalidate(doc),
       });
       scheduleAutosave(get, set);
@@ -137,6 +182,11 @@ export const useOntologyStore = create<Store>((set, get) => {
         undoStack: [],
         redoStack: [],
         autosaveStatus: "saved",
+        viewMode: "business",
+        mappingDoc: null,
+        mappingFileHandle: null,
+        mappingFileName: null,
+        mappingValidationErrors: [],
         ...revalidate(doc),
       });
     },
@@ -246,6 +296,13 @@ export const useOntologyStore = create<Store>((set, get) => {
       const selection = get().selection;
       if (nextId !== entityId && selection?.kind === "entity" && selection.id === entityId) {
         get().setSelection({ kind: "entity", id: nextId });
+      }
+      if (nextId !== entityId && get().mappingDoc) {
+        const nextMapping = migrateMappingOnEntityRename(get().mappingDoc!, entityId, nextId);
+        set({
+          mappingDoc: nextMapping,
+          mappingValidationErrors: validateTechnicalMapping(nextMapping, get().doc ?? undefined),
+        });
       }
     },
 
@@ -398,6 +455,13 @@ export const useOntologyStore = create<Store>((set, get) => {
       if (sel?.kind === "entity" && sel.id === entityId) {
         get().setSelection(null);
       }
+      if (get().mappingDoc) {
+        const nextMapping = migrateMappingOnEntityRemove(get().mappingDoc!, entityId);
+        set({
+          mappingDoc: nextMapping,
+          mappingValidationErrors: validateTechnicalMapping(nextMapping, get().doc ?? undefined),
+        });
+      }
     },
 
     addAction: (name, entityId) => {
@@ -425,6 +489,13 @@ export const useOntologyStore = create<Store>((set, get) => {
       const sel = get().selection;
       if (sel?.kind === "action" && sel.id === actionId) {
         get().setSelection(null);
+      }
+      if (get().mappingDoc) {
+        const nextMapping = migrateMappingOnActionRemove(get().mappingDoc!, actionId);
+        set({
+          mappingDoc: nextMapping,
+          mappingValidationErrors: validateTechnicalMapping(nextMapping, get().doc ?? undefined),
+        });
       }
     },
 
@@ -456,6 +527,176 @@ export const useOntologyStore = create<Store>((set, get) => {
         validationErrors: [],
         invariantViolations: [],
         autosaveStatus: "idle",
+        viewMode: "business",
+        mappingDoc: null,
+        mappingFileHandle: null,
+        mappingFileName: null,
+        mappingValidationErrors: [],
+      });
+    },
+
+    setViewMode: (mode) => {
+      if (mode === "technical" && !get().mappingDoc && get().doc) {
+        get().initTechnicalMapping();
+      }
+      set({ viewMode: mode });
+    },
+
+    loadMappingDocument: (mapping, handle = null, name = null) => {
+      const { doc } = get();
+      set({
+        mappingDoc: mapping,
+        mappingFileHandle: handle,
+        mappingFileName: name,
+        mappingValidationErrors: validateTechnicalMapping(mapping, doc ?? undefined),
+      });
+    },
+
+    initTechnicalMapping: () => {
+      const { doc } = get();
+      if (!doc) return;
+      const mapping = createDefaultTechnicalMapping(doc);
+      set({
+        mappingDoc: mapping,
+        mappingValidationErrors: validateTechnicalMapping(mapping, doc),
+      });
+    },
+
+    patchMappingDoc: (updater) => {
+      const { mappingDoc, doc } = get();
+      if (!mappingDoc) return;
+      const next = updater(mappingDoc);
+      set({
+        mappingDoc: next,
+        mappingValidationErrors: validateTechnicalMapping(next, doc ?? undefined),
+      });
+    },
+
+    updateEntityMapping: (entityId, patch) => {
+      const { mappingDoc, doc } = get();
+      if (!mappingDoc) return;
+      const current = mappingDoc.entity_mappings?.[entityId] ?? {};
+      const next = {
+        ...mappingDoc,
+        entity_mappings: {
+          ...(mappingDoc.entity_mappings ?? {}),
+          [entityId]: { ...current, ...patch },
+        },
+      };
+      set({
+        mappingDoc: next,
+        mappingValidationErrors: validateTechnicalMapping(next, doc ?? undefined),
+      });
+    },
+
+    updateEntityFieldMapping: (entityId, attrId, columnName) => {
+      const { mappingDoc, doc } = get();
+      if (!mappingDoc) return;
+      const current = mappingDoc.entity_mappings?.[entityId] ?? {};
+      const currentFields = current.field_mappings ?? {};
+      const nextFields = { ...currentFields, [attrId]: columnName };
+      const next = {
+        ...mappingDoc,
+        entity_mappings: {
+          ...(mappingDoc.entity_mappings ?? {}),
+          [entityId]: {
+            ...current,
+            field_mappings: nextFields,
+          },
+        },
+      };
+      set({
+        mappingDoc: next,
+        mappingValidationErrors: validateTechnicalMapping(next, doc ?? undefined),
+      });
+    },
+
+    updateActionMapping: (actionId, patch) => {
+      const { mappingDoc, doc } = get();
+      if (!mappingDoc) return;
+      const current = mappingDoc.action_mappings?.[actionId] ?? {};
+      const next = {
+        ...mappingDoc,
+        action_mappings: {
+          ...(mappingDoc.action_mappings ?? {}),
+          [actionId]: { ...current, ...patch },
+        },
+      };
+      set({
+        mappingDoc: next,
+        mappingValidationErrors: validateTechnicalMapping(next, doc ?? undefined),
+      });
+    },
+
+    addDataSource: (name, ds) => {
+      const { mappingDoc, doc } = get();
+      if (!mappingDoc) return;
+      const infra = mappingDoc.infrastructure ?? {};
+      const next = {
+        ...mappingDoc,
+        infrastructure: {
+          ...infra,
+          data_sources: {
+            ...(infra.data_sources ?? {}),
+            [name]: ds,
+          },
+        },
+      };
+      set({
+        mappingDoc: next,
+        mappingValidationErrors: validateTechnicalMapping(next, doc ?? undefined),
+      });
+    },
+
+    removeDataSource: (name) => {
+      const { mappingDoc, doc } = get();
+      if (!mappingDoc || !mappingDoc.infrastructure?.data_sources) return;
+      const { [name]: _, ...rest } = mappingDoc.infrastructure.data_sources;
+      const next = {
+        ...mappingDoc,
+        infrastructure: {
+          ...mappingDoc.infrastructure,
+          data_sources: rest,
+        },
+      };
+      set({
+        mappingDoc: next,
+        mappingValidationErrors: validateTechnicalMapping(next, doc ?? undefined),
+      });
+    },
+
+    addMcpConnector: (connector) => {
+      const { mappingDoc, doc } = get();
+      if (!mappingDoc) return;
+      const infra = mappingDoc.infrastructure ?? {};
+      const current = infra.mcp_connectors ?? [];
+      const filtered = current.filter((c) => c.name !== connector.name);
+      const next = {
+        ...mappingDoc,
+        infrastructure: {
+          ...infra,
+          mcp_connectors: [...filtered, connector],
+        },
+      };
+      set({
+        mappingDoc: next,
+        mappingValidationErrors: validateTechnicalMapping(next, doc ?? undefined),
+      });
+    },
+
+    removeMcpConnector: (name) => {
+      const { mappingDoc, doc } = get();
+      if (!mappingDoc || !mappingDoc.infrastructure?.mcp_connectors) return;
+      const next = {
+        ...mappingDoc,
+        infrastructure: {
+          ...mappingDoc.infrastructure,
+          mcp_connectors: mappingDoc.infrastructure.mcp_connectors.filter((c) => c.name !== name),
+        },
+      };
+      set({
+        mappingDoc: next,
+        mappingValidationErrors: validateTechnicalMapping(next, doc ?? undefined),
       });
     },
   };

@@ -1,5 +1,6 @@
 import { confirmDiscardChanges } from "../lib/unsavedChanges";
-import { saveYamlAs, saveYamlToHandle } from "../lib/fileAccess";
+import { pickYamlFile, saveMappingYamlAs, saveMappingYamlToHandle, saveYamlAs, saveYamlToHandle } from "../lib/fileAccess";
+import { parseTechnicalMappingYaml } from "../lib/technicalMapping";
 import { formatValidationIssues } from "../lib/validationMessages";
 import { useT } from "../i18n";
 import { useOntologyStore } from "../store";
@@ -22,11 +23,20 @@ export function TopBar({ onOpenMermaid }: TopBarProps) {
   const markSaved = useOntologyStore((s) => s.markSaved);
   const setFileHandle = useOntologyStore((s) => s.setFileHandle);
   const autosaveStatus = useOntologyStore((s) => s.autosaveStatus);
+
+  const viewMode = useOntologyStore((s) => s.viewMode);
+  const setViewMode = useOntologyStore((s) => s.setViewMode);
+  const mappingDoc = useOntologyStore((s) => s.mappingDoc);
+  const mappingFileName = useOntologyStore((s) => s.mappingFileName);
+  const mappingFileHandle = useOntologyStore((s) => s.mappingFileHandle);
+  const mappingValidationErrors = useOntologyStore((s) => s.mappingValidationErrors);
+  const loadMappingDocument = useOntologyStore((s) => s.loadMappingDocument);
   const t = useT();
 
   const canSave = validationErrors.length === 0;
   const errorMessages = formatValidationIssues(validationErrors, t);
   const invariantMessages = formatValidationIssues(invariantIssues, t);
+  const mappingErrorMessages = formatValidationIssues(mappingValidationErrors, t);
 
   async function saveAsClient() {
     if (!doc) return;
@@ -43,6 +53,31 @@ export function TopBar({ onOpenMermaid }: TopBarProps) {
     if (ok) markSaved();
   }
 
+  async function loadMappingFile() {
+    const picked = await pickYamlFile();
+    if (!picked) return;
+    try {
+      const mapping = parseTechnicalMappingYaml(picked.text);
+      loadMappingDocument(mapping, picked.handle, picked.handle.name);
+    } catch (err) {
+      alert(`Error loading technical mapping: ${String(err)}`);
+    }
+  }
+
+  async function saveMappingAsClient() {
+    if (!mappingDoc) return;
+    const defaultName = `${doc?.domain ?? "domain"}.technical_mapping.yaml`;
+    const handle = await saveMappingYamlAs(mappingDoc, defaultName);
+    if (handle) {
+      loadMappingDocument(mappingDoc, handle, handle.name);
+    }
+  }
+
+  async function saveMappingExisting() {
+    if (!mappingDoc || !mappingFileHandle) return;
+    await saveMappingYamlToHandle(mappingFileHandle, mappingDoc);
+  }
+
   function goToStart() {
     if (confirmDiscardChanges()) backToStart();
   }
@@ -51,6 +86,22 @@ export function TopBar({ onOpenMermaid }: TopBarProps) {
     <>
       <header className="topbar">
         <h1>{doc?.domain ?? t("app.title")}</h1>
+        <div className="view-mode-toggle" role="group" aria-label={t("topbar.viewMode")}>
+          <button
+            type="button"
+            className={`mode-btn ${viewMode === "business" ? "active" : ""}`}
+            onClick={() => setViewMode("business")}
+          >
+            {t("topbar.modeBusiness")}
+          </button>
+          <button
+            type="button"
+            className={`mode-btn ${viewMode === "technical" ? "active" : ""}`}
+            onClick={() => setViewMode("technical")}
+          >
+            {t("topbar.modeTechnical")}
+          </button>
+        </div>
         <button type="button" onClick={goToStart}>
           {t("topbar.templates")}
         </button>
@@ -68,35 +119,64 @@ export function TopBar({ onOpenMermaid }: TopBarProps) {
         </button>
         <LanguageSwitcher />
         <span className="spacer" />
-        {autosaveStatus !== "idle" && (
-          <span className={`autosave-status ${autosaveStatus}`}>
-            <span className="dot" />
-            {autosaveStatus === "saving" ? t("topbar.saving") : t("topbar.autosaved")}
-          </span>
+
+        {viewMode === "business" ? (
+          <>
+            {autosaveStatus !== "idle" && (
+              <span className={`autosave-status ${autosaveStatus}`}>
+                <span className="dot" />
+                {autosaveStatus === "saving" ? t("topbar.saving") : t("topbar.autosaved")}
+              </span>
+            )}
+            <span className="meta tech-only">
+              {fileName ?? t("topbar.unsaved")} · {doc?.domain} v{doc?.version}
+              {doc?.based_on
+                ? ` · ${t("topbar.basedOn", { id: doc.based_on.id, version: doc.based_on.version })}`
+                : ""}
+            </span>
+            <button type="button" className="primary" disabled={!canSave} onClick={() => void saveAsClient()}>
+              {t("topbar.saveAs")}
+            </button>
+            <button type="button" disabled={!canSave || !fileHandle} onClick={() => void saveExisting()}>
+              {t("topbar.save")}
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="meta tech-only">
+              {mappingFileName ?? `${doc?.domain ?? "domain"}.technical_mapping.yaml`}
+            </span>
+            <button type="button" onClick={() => void loadMappingFile()}>
+              {t("topbar.loadMapping")}
+            </button>
+            <button type="button" className="primary" onClick={() => void saveMappingAsClient()}>
+              {t("topbar.saveMappingAs")}
+            </button>
+            {mappingFileHandle && (
+              <button type="button" onClick={() => void saveMappingExisting()}>
+                {t("topbar.saveMapping")}
+              </button>
+            )}
+          </>
         )}
-        <span className="meta tech-only">
-          {fileName ?? t("topbar.unsaved")} · {doc?.domain} v{doc?.version}
-          {doc?.based_on
-            ? ` · ${t("topbar.basedOn", { id: doc.based_on.id, version: doc.based_on.version })}`
-            : ""}
-        </span>
-        <button type="button" className="primary" disabled={!canSave} onClick={() => void saveAsClient()}>
-          {t("topbar.saveAs")}
-        </button>
-        <button type="button" disabled={!canSave || !fileHandle} onClick={() => void saveExisting()}>
-          {t("topbar.save")}
-        </button>
       </header>
-      {validationErrors.length > 0 && (
+      {viewMode === "business" && validationErrors.length > 0 && (
         <div className="errors tech-only">
           {errorMessages.map((message) => (
             <div key={message}>{message}</div>
           ))}
         </div>
       )}
-      {invariantIssues.length > 0 && (
+      {viewMode === "business" && invariantIssues.length > 0 && (
         <div className="errors invariant-errors">
           {invariantMessages.map((message) => (
+            <div key={message}>{message}</div>
+          ))}
+        </div>
+      )}
+      {viewMode === "technical" && mappingValidationErrors.length > 0 && (
+        <div className="errors tech-only">
+          {mappingErrorMessages.map((message) => (
             <div key={message}>{message}</div>
           ))}
         </div>

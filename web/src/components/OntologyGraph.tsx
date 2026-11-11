@@ -14,6 +14,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import type { Ontology } from "../types";
 import { formatCardinality, getRelationshipBounds } from "../lib/cardinality";
+import { getEntityMappingCoverage } from "../lib/technicalMapping";
 import { layoutPositions } from "../lib/layoutElk";
 import { useOntologyStore } from "../store";
 import { EntityNode } from "./EntityNode";
@@ -29,11 +30,15 @@ function buildFlowNodes(
   selection: ReturnType<typeof useOntologyStore.getState>["selection"],
   expandedId: string | null,
   onToggle: (id: string) => void,
+  viewMode: ReturnType<typeof useOntologyStore.getState>["viewMode"],
+  mappingDoc: ReturnType<typeof useOntologyStore.getState>["mappingDoc"],
 ): Node[] {
   return doc.entities.map((e) => {
     const pos = positions.get(e.id) ?? { x: 0, y: 0 };
     const selected = selection?.kind === "entity" && selection.id === e.id;
     const expanded = expandedId === e.id;
+    const entMapping = mappingDoc?.entity_mappings?.[e.id];
+    const coverage = getEntityMappingCoverage(e, entMapping);
     return {
       id: e.id,
       type: "entity",
@@ -46,9 +51,16 @@ function buildFlowNodes(
           id: attr.id,
           name: attr.name,
           pii: attr.pii,
+          mappedColumn: entMapping?.field_mappings?.[attr.id],
         })),
         expanded,
         onToggle: () => onToggle(e.id),
+        isTechnicalMode: viewMode === "technical",
+        systemOfRecord: entMapping?.system_of_record,
+        table: entMapping?.table,
+        mappingStatus: coverage.status,
+        mappedFieldsCount: coverage.mapped,
+        totalFieldsCount: coverage.total,
       },
       selected,
       connectable: true,
@@ -94,6 +106,8 @@ export function OntologyGraph({ doc }: { doc: Ontology }) {
   const updateNodePosition = useOntologyStore((s) => s.updateNodePosition);
   const addRelationship = useOntologyStore((s) => s.addRelationship);
   const selection = useOntologyStore((s) => s.selection);
+  const viewMode = useOntologyStore((s) => s.viewMode);
+  const mappingDoc = useOntologyStore((s) => s.mappingDoc);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const toggleFields = useCallback((id: string) => {
@@ -109,8 +123,8 @@ export function OntologyGraph({ doc }: { doc: Ontology }) {
   const positions = useMemo(() => layoutPositions(doc), [doc]);
 
   const flowNodes = useMemo(
-    () => buildFlowNodes(doc, positions, selection, expandedId, toggleFields),
-    [doc, positions, selection, expandedId, toggleFields],
+    () => buildFlowNodes(doc, positions, selection, expandedId, toggleFields, viewMode, mappingDoc),
+    [doc, positions, selection, expandedId, toggleFields, viewMode, mappingDoc],
   );
 
   const flowEdges = useMemo(

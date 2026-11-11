@@ -122,3 +122,46 @@ export type Selection =
   | null;
 
 export type TemplateId = "generic";
+
+export type DataSourceType = "postgresql" | "snowflake" | "openapi_v3" | "rest" | "custom";
+
+export interface DataSource {
+  type: DataSourceType;
+  dsn_env_var?: string;
+  warehouse?: string;
+  endpoint?: string;
+}
+
+export interface McpConnector {
+  name: string;
+  url: string;
+}
+
+export interface EntityMapping {
+  system_of_record?: string;
+  table?: string;
+  field_mappings?: Record<string, string>;
+}
+
+export interface ActionMapping {
+  handler?: string;
+  mcp_connector?: string;
+  telemetry_sink?: string;
+}
+
+export interface TechnicalMappingInfrastructure {
+  data_sources?: Record<string, DataSource>;
+  mcp_connectors?: McpConnector[];
+}
+
+export interface TechnicalMapping {
+  $schema?: string;
+  version: string;
+  binds_to: string;
+  infrastructure?: TechnicalMappingInfrastructure;
+  entity_mappings?: Record<string, EntityMapping>;
+  action_mappings?: Record<string, ActionMapping>;
+}
+
+export type ViewMode = "business" | "technical";
+

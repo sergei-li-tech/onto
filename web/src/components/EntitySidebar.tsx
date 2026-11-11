@@ -4,12 +4,14 @@ import { useT } from "../i18n";
 import { useOntologyStore } from "../store";
 import { CollapsibleSidebarSection } from "./CollapsibleSidebarSection";
 import { SideLists } from "./SideLists";
+import { InfrastructureSidebarSection } from "./InfrastructureSidebarSection";
 
 export function EntitySidebar({ doc }: { doc: Ontology }) {
   const search = useOntologyStore((s) => s.search);
   const setSearch = useOntologyStore((s) => s.setSearch);
   const selection = useOntologyStore((s) => s.selection);
   const setSelection = useOntologyStore((s) => s.setSelection);
+  const viewMode = useOntologyStore((s) => s.viewMode);
   const t = useT();
 
   const entities = doc.entities.filter((e) => entityMatchesSearch(e, search));
@@ -38,7 +40,11 @@ export function EntitySidebar({ doc }: { doc: Ontology }) {
         ))}
       </CollapsibleSidebarSection>
 
-      <SideLists doc={doc} />
+      {viewMode === "technical" ? (
+        <InfrastructureSidebarSection />
+      ) : (
+        <SideLists doc={doc} />
+      )}
     </aside>
   );
 }

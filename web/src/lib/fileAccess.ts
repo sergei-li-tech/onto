@@ -1,5 +1,6 @@
-import type { Ontology } from "../types";
+import type { Ontology, TechnicalMapping } from "../types";
 import { serializeOntology } from "./yaml";
+import { serializeTechnicalMapping } from "./technicalMapping";
 import { blockingIssues, validateOntology } from "./validate";
 import { formatValidationIssues } from "./validationMessages";
 import { t } from "../i18n";
@@ -71,3 +72,43 @@ async function writeHandle(handle: FileSystemFileHandle, doc: Ontology): Promise
   await writable.write(body);
   await writable.close();
 }
+
+export async function saveMappingYamlAs(
+  mapping: TechnicalMapping,
+  suggestedName: string,
+): Promise<FileSystemFileHandle | null> {
+  if (!("showSaveFilePicker" in window)) {
+    alert(t("file.chromeSave"));
+    return null;
+  }
+  const handle = await window.showSaveFilePicker({
+    suggestedName,
+    types: [
+      {
+        description: "Technical Mapping YAML",
+        accept: { "text/yaml": [".yaml", ".yml"] },
+      },
+    ],
+  });
+  await writeMappingHandle(handle, mapping);
+  return handle;
+}
+
+export async function saveMappingYamlToHandle(
+  handle: FileSystemFileHandle,
+  mapping: TechnicalMapping,
+): Promise<boolean> {
+  await writeMappingHandle(handle, mapping);
+  return true;
+}
+
+async function writeMappingHandle(
+  handle: FileSystemFileHandle,
+  mapping: TechnicalMapping,
+): Promise<void> {
+  const writable = await handle.createWritable();
+  const body = serializeTechnicalMapping(mapping);
+  await writable.write(body);
+  await writable.close();
+}
+

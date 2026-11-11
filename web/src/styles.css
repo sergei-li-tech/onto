@@ -1410,3 +1410,254 @@ body {
 .modal-footer button.primary:hover {
   background: #1d4ed8;
 }
+
+/* View Mode Toggle */
+.view-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  margin: 0 4px;
+}
+
+.view-mode-toggle .mode-btn {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-mode-toggle .mode-btn:hover {
+  color: #0f172a;
+}
+
+.view-mode-toggle .mode-btn.active {
+  background: #ffffff;
+  color: #2563eb;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Entity Node Technical Badges */
+.entity-tech-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.entity-tech-table {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  color: #334155;
+  font-weight: 600;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entity-tech-table.unmapped {
+  font-style: italic;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.entity-tech-count {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.attr-mapping-pill {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attr-mapping-pill.mapped {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.attr-mapping-pill.unmapped {
+  color: #cbd5e1;
+}
+
+/* Infrastructure Sidebar */
+.infra-sidebar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.infra-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.infra-item-card {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  font-size: 0.82rem;
+}
+
+.infra-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.infra-item-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.infra-item-badge {
+  font-size: 0.68rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.infra-delete-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 0.8rem;
+}
+
+.infra-delete-btn:hover {
+  color: #ef4444;
+}
+
+.infra-item-meta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+.infra-add-form {
+  padding: 8px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.infra-form-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* Field Mappings in Detail Panel */
+.tech-mapping-card {
+  margin-top: 10px;
+}
+
+.field-mappings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0 8px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  color: #1d4ed8;
+}
+
+.field-mappings-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-mapping-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.field-mapping-attr {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
+.field-mapping-attr-name {
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.field-mapping-attr-id {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.field-mapping-arrow {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.field-mapping-input {
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  background: #f8fafc;
+}
+
+.field-mapping-input:focus {
+  background: #ffffff;
+  border-color: #2563eb;
+  outline: none;
+}
