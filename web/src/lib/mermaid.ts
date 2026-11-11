@@ -127,6 +127,10 @@ export function exportMermaidFlowchart(doc: Ontology): string {
         const entId = sanitizeToken(action.entity);
         lines.push(`    ${entId} -.-> ${actId}`);
       }
+      if (action.produces) {
+        const prodId = sanitizeToken(action.produces);
+        lines.push(`    ${actId} -. produces .-> ${prodId}`);
+      }
     }
   }
 

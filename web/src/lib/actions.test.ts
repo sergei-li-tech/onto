@@ -171,3 +171,47 @@ describe("Structured action inputs (tool calling)", () => {
     expect(refIssues.some((i) => i.code === "actionInputRefEntityUnknown")).toBe(true);
   });
 });
+
+describe("action produces entity reference", () => {
+  it("round-trips produces field through YAML serialization and passes validation", () => {
+    const doc: Ontology = {
+      ...docWith([]),
+      entities: [
+        { id: "customer", name: "Customer", attributes: [] },
+        { id: "report", name: "Compliance Report", attributes: [] },
+      ],
+      actions: [
+        {
+          id: "verify_compliance",
+          name: "Verify Compliance",
+          entity: "customer",
+          produces: "report",
+        },
+      ],
+    };
+
+    const yaml = serializeOntology(doc);
+    expect(yaml).toContain("produces: report");
+
+    const parsed = parseOntologyYaml(yaml);
+    expect(parsed.actions[0]?.produces).toBe("report");
+    expect(validateOntology(parsed)).toEqual([]);
+  });
+
+  it("fails validation when produces points to a non-existent entity", () => {
+    const doc: Ontology = {
+      ...docWith([]),
+      entities: [{ id: "customer", name: "Customer", attributes: [] }],
+      actions: [
+        {
+          id: "verify_compliance",
+          name: "Verify Compliance",
+          produces: "non_existent_artifact",
+        },
+      ],
+    };
+
+    const issues = validateOntology(doc);
+    expect(issues.some((i) => i.code === "actionUnknownProducesEntity" && i.action === "verify_compliance")).toBe(true);
+  });
+});

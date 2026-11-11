@@ -116,5 +116,25 @@ describe("Ontology Store Extended Operations", () => {
     expect(updated.invariants).toHaveLength(0);
     expect(useOntologyStore.getState().selection).toBeNull();
   });
+
+  it("clears produces reference on actions when the produced entity is removed", () => {
+    const store = useOntologyStore.getState();
+    store.patchDoc((d) => ({
+      ...d,
+      actions: [
+        {
+          id: "generate_order",
+          name: "Generate Order",
+          entity: "customer",
+          produces: "order",
+        },
+      ],
+    }));
+
+    store.removeEntity("order");
+    const updated = useOntologyStore.getState().doc!;
+    expect(updated.actions[0]?.entity).toBe("customer");
+    expect(updated.actions[0]?.produces).toBeUndefined();
+  });
 });
 

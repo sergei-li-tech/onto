@@ -70,6 +70,22 @@ describe("Mermaid Export", () => {
     expect(flow).toContain("order -.-> act_confirm_order");
   });
 
+  it("exports action produces links in flowchart", () => {
+    const docWithProduces: Ontology = {
+      ...sampleDoc,
+      actions: [
+        {
+          id: "confirm_order",
+          name: "Confirm Order",
+          entity: "order",
+          produces: "customer",
+        },
+      ],
+    };
+    const flow = exportMermaidFlowchart(docWithProduces);
+    expect(flow).toContain("act_confirm_order -. produces .-> customer");
+  });
+
   it("exports valid State Diagram syntax with transitions", () => {
     const states = exportMermaidStateDiagram(sampleDoc);
     expect(states).toContain("stateDiagram-v2");

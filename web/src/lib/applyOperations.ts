@@ -97,7 +97,9 @@ export function applyOperations(doc: Ontology, rawOps: unknown[]): Ontology {
           ...next,
           entities: next.entities.filter((e) => e.id !== id),
           relationships: next.relationships.filter((r) => r.from !== id && r.to !== id),
-          actions: next.actions.filter((a) => a.entity !== id),
+          actions: next.actions
+            .filter((a) => a.entity !== id)
+            .map((a) => (a.produces === id ? { ...a, produces: undefined } : a)),
         };
         break;
       }

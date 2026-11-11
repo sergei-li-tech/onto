@@ -190,6 +190,11 @@
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
         "entity": { "type": "string", "minLength": 1 },
+        "produces": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Entity ID of the domain artifact or entity produced by this action."
+        },
         "name": { "type": "string", "minLength": 1 },
         "requires_confirmation": { "type": "boolean" },
         "risk_level": {

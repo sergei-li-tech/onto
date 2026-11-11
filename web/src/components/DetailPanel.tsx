@@ -327,6 +327,34 @@ export function DetailPanel({ doc }: { doc: Ontology }) {
               </p>
             ) : null}
             <div className="field">
+              <div className="heading-with-info">
+                <label htmlFor="action-produces">{t("detail.actionProduces")}</label>
+                <InfoTip text={t("detail.actionProducesInfo")} />
+              </div>
+              <select
+                id="action-produces"
+                value={action.produces ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  patchDoc((d) => ({
+                    ...d,
+                    actions: d.actions.map((a) =>
+                      a.id === action.id
+                        ? { ...a, produces: val ? val : undefined }
+                        : a,
+                    ),
+                  }));
+                }}
+              >
+                <option value="">{t("detail.actionProducesNone")}</option>
+                {doc.entities.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
               <label className="heading-with-info" htmlFor={`action-rule-${action.id}`}>
                 {t("detail.rule")}
                 <InfoTip text={t("detail.ruleInfo")} />

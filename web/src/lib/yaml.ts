@@ -215,6 +215,7 @@ function actionInputToPlain(i: ActionInput): Record<string, unknown> {
 function actionToPlain(a: Action): Record<string, unknown> {
   const out: Record<string, unknown> = { id: a.id, name: a.name };
   if (a.entity) out.entity = a.entity;
+  if (a.produces) out.produces = a.produces;
   if (a.roles_allowed && a.roles_allowed.length > 0) out.roles_allowed = a.roles_allowed;
   if (a.risk_level) out.risk_level = a.risk_level;
   if (a.requires_confirmation !== undefined) out.requires_confirmation = a.requires_confirmation;
@@ -256,6 +257,10 @@ function parseAction(raw: unknown): Action {
   action.name = asString(raw.get("name"), "actions.name");
   const entity = raw.get("entity");
   if (entity !== undefined) action.entity = asString(entity, "actions.entity");
+  const produces = raw.get("produces");
+  if (produces !== undefined && produces !== null) {
+    action.produces = asString(produces, "actions.produces");
+  }
   const confirm = raw.get("requires_confirmation");
   if (confirm !== undefined) {
     action.requires_confirmation = asBool(confirm, "actions.requires_confirmation");

@@ -123,9 +123,20 @@ export function repairOntologyIds(doc: Ontology): { doc: Ontology; aliases: Map<
     return { ...rel, from, to };
   });
   const actions = doc.actions.map((action) => {
-    if (!action.entity || !aliases.has(action.entity)) return action;
+    let actionChanged = false;
+    let nextEntity = action.entity;
+    let nextProduces = action.produces;
+    if (nextEntity && aliases.has(nextEntity)) {
+      nextEntity = resolve(nextEntity);
+      actionChanged = true;
+    }
+    if (nextProduces && aliases.has(nextProduces)) {
+      nextProduces = resolve(nextProduces);
+      actionChanged = true;
+    }
+    if (!actionChanged) return action;
     changed = true;
-    return { ...action, entity: resolve(action.entity) };
+    return { ...action, entity: nextEntity, produces: nextProduces };
   });
   const layout = doc.layout?.nodes
     ? {
@@ -163,9 +174,12 @@ export function rekeyEntityId(doc: Ontology, oldId: string, newId: string): Onto
       from: r.from === oldId ? newId : r.from,
       to: r.to === oldId ? newId : r.to,
     })),
-    actions: doc.actions.map((a) =>
-      a.entity === oldId ? { ...a, entity: newId } : a,
-    ),
+    actions: doc.actions.map((a) => {
+      const nextEntity = a.entity === oldId ? newId : a.entity;
+      const nextProduces = a.produces === oldId ? newId : a.produces;
+      if (nextEntity === a.entity && nextProduces === a.produces) return a;
+      return { ...a, entity: nextEntity, produces: nextProduces };
+    }),
     layout: doc.layout
       ? {
           nodes: doc.layout.nodes?.map((n) =>

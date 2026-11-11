@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Entity, Ontology } from "../types";
-import { attributeIdFromName, entityIdFromName, renameAttributeInEntity, repairOntologyIds } from "./autoIds";
+import { attributeIdFromName, entityIdFromName, rekeyEntityId, renameAttributeInEntity, repairOntologyIds } from "./autoIds";
 import { validateOntology } from "./validate";
 
 const SNAKE_ID = /^[a-z][a-z0-9_]*$/;
@@ -99,5 +99,34 @@ describe("attributeIdFromName", () => {
       attributes: [{ id: "id", type: "string", name: "Identifier.", required: true }],
     } as Entity;
     expect(renameAttributeInEntity(entity, "id", "  Identifier.  ")).toBe(entity);
+  });
+});
+
+describe("rekeyEntityId with action produces", () => {
+  it("updates action produces reference when the produced entity id changes", () => {
+    const doc: Ontology = {
+      domain: "demo",
+      version: "1.0.0",
+      notes: "",
+      entities: [
+        { id: "customer", name: "Customer", attributes: [] },
+        { id: "report_old", name: "Report", attributes: [] },
+      ],
+      relationships: [],
+      actions: [
+        {
+          id: "check",
+          name: "Check",
+          entity: "customer",
+          produces: "report_old",
+        },
+      ],
+      invariants: [],
+      open_questions: [],
+      out_of_scope: [],
+    };
+
+    const rekeyed = rekeyEntityId(doc, "report_old", "report_new");
+    expect(rekeyed.actions[0]?.produces).toBe("report_new");
   });
 });

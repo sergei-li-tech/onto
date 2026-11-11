@@ -58,6 +58,7 @@ export interface Action {
   id: string;
   name: string;
   entity?: string;
+  produces?: string;
   requires_confirmation?: boolean;
   /** OAO risk assessment for Tool Interceptor / execution gating. */
   risk_level?: RiskLevel;

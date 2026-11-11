@@ -387,7 +387,9 @@ export const useOntologyStore = create<Store>((set, get) => {
         relationships: d.relationships.filter(
           (r) => r.from !== entityId && r.to !== entityId,
         ),
-        actions: d.actions.filter((a) => a.entity !== entityId),
+        actions: d.actions
+          .filter((a) => a.entity !== entityId)
+          .map((a) => (a.produces === entityId ? { ...a, produces: undefined } : a)),
         layout: d.layout?.nodes
           ? { nodes: d.layout.nodes.filter((n) => n.id !== entityId) }
           : d.layout,

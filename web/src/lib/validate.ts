@@ -217,6 +217,9 @@ export function validateOntology(doc: Ontology): ValidationIssue[] {
         }
       }
     }
+    if (a.produces && !allEntityIds.has(a.produces)) {
+      errors.push({ code: "actionUnknownProducesEntity", action: a.id, value: a.produces });
+    }
     if (!a.entity) continue;
     if (!entityIds.has(a.entity)) {
       errors.push({ code: "actionUnknownEntity", action: a.id, value: a.entity });
