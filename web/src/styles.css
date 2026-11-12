@@ -1661,3 +1661,98 @@ body {
   border-color: #2563eb;
   outline: none;
 }
+
+/* Header dropdown: one button that holds saving and every export. */
+.header-menu {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.header-menu .header-menu-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+
+.header-menu-chevron {
+  font-size: 0.7rem;
+  line-height: 1;
+  opacity: 0.8;
+  transition: transform 120ms ease;
+}
+
+.header-menu-button[aria-expanded="true"] .header-menu-chevron {
+  transform: rotate(180deg);
+}
+
+.header-menu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 250px;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 6px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #1e293b;
+  color: #e2e8f0;
+  box-shadow: 0 10px 24px rgb(2 6 23 / 45%);
+}
+
+.header-menu-group {
+  padding: 6px 8px 2px;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.header-menu-separator {
+  height: 1px;
+  margin: 6px 4px;
+  background: #334155;
+}
+
+.header-menu .header-menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.header-menu .header-menu-item:hover:not(:disabled),
+.header-menu .header-menu-item:focus-visible {
+  background: #334155;
+}
+
+.header-menu .header-menu-item:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.header-menu .header-menu-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.header-menu-item-hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}

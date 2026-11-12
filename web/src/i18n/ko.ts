@@ -34,6 +34,18 @@ export const ko: Dict = {
   "topbar.saveMappingAs": "다른 이름으로 매핑 저장…",
   "topbar.saveMapping": "매핑 저장",
 
+  "menu.label": "저장 및 내보내기",
+  "menu.fileGroup": "파일",
+  "menu.exportGroup": "내보내기",
+  "menu.mermaidER": "Mermaid: ER 다이어그램 (.mmd)",
+  "menu.mermaidFlowchart": "Mermaid: 플로차트 (.mmd)",
+  "menu.mermaidStates": "Mermaid: 상태 다이어그램 (.mmd)",
+  "menu.mermaidOpen": "Mermaid: 미리보기 및 복사",
+  "menu.png": "PNG: 다이어그램 이미지",
+  "menu.pngHint": "전체 다이어그램, 2× 배율",
+  "menu.pngBusy": "PNG 생성 중…",
+  "menu.pngFailed": "PNG를 만들지 못했습니다: {{error}}",
+
   "infra.title": "인프라",
   "infra.dataSources": "데이터 소스",
   "infra.mcpConnectors": "MCP 커넥터",

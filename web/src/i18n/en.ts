@@ -32,6 +32,18 @@ export const en = {
   "topbar.saveMappingAs": "Save mapping as…",
   "topbar.saveMapping": "Save mapping",
 
+  "menu.label": "Save and export",
+  "menu.fileGroup": "File",
+  "menu.exportGroup": "Export",
+  "menu.mermaidER": "Mermaid: ER diagram (.mmd)",
+  "menu.mermaidFlowchart": "Mermaid: flowchart (.mmd)",
+  "menu.mermaidStates": "Mermaid: state diagram (.mmd)",
+  "menu.mermaidOpen": "Mermaid: preview and copy",
+  "menu.png": "PNG: diagram picture",
+  "menu.pngHint": "Whole diagram, 2× scale",
+  "menu.pngBusy": "Rendering PNG…",
+  "menu.pngFailed": "Could not render PNG: {{error}}",
+
   "infra.title": "Infrastructure",
   "infra.dataSources": "Data sources",
   "infra.mcpConnectors": "MCP connectors",
