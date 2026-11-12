@@ -73,8 +73,8 @@ export async function downloadGraphPng(doc: Ontology, root: ParentNode = documen
     pixelRatio: 1,
     backgroundColor: PNG_BACKGROUND,
     style: {
-      width: `${geometry.cssWidth}px`,
-      height: `${geometry.cssHeight}px`,
+      // html-to-image applies `width`/`height` to the clone too, so only the
+      // transform (which positions the whole graph at 2×) is overridden here.
       transform: geometry.transform,
       transformOrigin: "0 0",
     },
