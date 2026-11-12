@@ -13,9 +13,10 @@ import { useT } from "../i18n";
 import { useOntologyStore } from "../store";
 import { stepIndex } from "../lib/langMenu";
 
-function nextFrame(): Promise<void> {
+/** Waits for a couple of render passes; setTimeout keeps working in a hidden tab. */
+function settleDom(): Promise<void> {
   return new Promise((resolve) => {
-    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    setTimeout(resolve, 60);
   });
 }
 
@@ -118,8 +119,8 @@ export function HeaderMenu({ onOpenMermaid }: { onOpenMermaid?: () => void }) {
     store.setCaptureMode(true);
     try {
       await document.fonts?.ready;
-      await nextFrame();
-      await nextFrame();
+      await settleDom();
+      await settleDom();
       await downloadGraphPng(doc);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
