@@ -57,11 +57,27 @@ function triggerDownload(dataUrl: string, fileName: string): void {
 }
 
 /**
+ * Waits until the graph renders with every field list open, so the measured
+ * bounds match the picture that is actually captured.
+ */
+async function waitForExpandedGraph(timeoutMs = 2000): Promise<void> {
+  const startedAt = performance.now();
+  for (;;) {
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>(GRAPH_NODE_SELECTOR));
+    if (nodes.length === 0) return;
+    const allExpanded = nodes.every((node) => node.querySelector(".entity-field-list"));
+    if (allExpanded || performance.now() - startedAt > timeoutMs) return;
+    await new Promise((resolve) => setTimeout(resolve, 30));
+  }
+}
+
+/**
  * Rasterises the whole ontology graph into a PNG (2× scale, opaque background).
  * The caller is responsible for expanding the nodes and clearing the selection
  * before calling, so no selection or hover state is captured.
  */
 export async function downloadGraphPng(doc: Ontology, root: ParentNode = document): Promise<void> {
+  await waitForExpandedGraph();
   const viewport = root.querySelector<HTMLElement>(GRAPH_VIEWPORT_SELECTOR);
   const bounds = measureGraphBounds(root);
   if (!viewport || !bounds) throw new Error("graph is not rendered");
