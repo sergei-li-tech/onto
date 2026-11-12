@@ -37,54 +37,57 @@ export function TopBar({ onOpenMermaid }: TopBarProps) {
   return (
     <>
       <header className="topbar">
-        <h1>{doc?.domain ?? t("app.title")}</h1>
-        <div className="view-mode-toggle" role="group" aria-label={t("topbar.viewMode")}>
-          <button
-            type="button"
-            className={`mode-btn ${viewMode === "business" ? "active" : ""}`}
-            onClick={() => setViewMode("business")}
-          >
-            {t("topbar.modeBusiness")}
+        <div className="topbar-main">
+          <h1>{doc?.domain ?? t("app.title")}</h1>
+          <div className="view-mode-toggle" role="group" aria-label={t("topbar.viewMode")}>
+            <button
+              type="button"
+              className={`mode-btn ${viewMode === "business" ? "active" : ""}`}
+              onClick={() => setViewMode("business")}
+            >
+              {t("topbar.modeBusiness")}
+            </button>
+            <button
+              type="button"
+              className={`mode-btn ${viewMode === "technical" ? "active" : ""}`}
+              onClick={() => setViewMode("technical")}
+            >
+              {t("topbar.modeTechnical")}
+            </button>
+          </div>
+          <button type="button" onClick={goToStart}>
+            {t("topbar.templates")}
           </button>
-          <button
-            type="button"
-            className={`mode-btn ${viewMode === "technical" ? "active" : ""}`}
-            onClick={() => setViewMode("technical")}
-          >
-            {t("topbar.modeTechnical")}
+          <button type="button" onClick={undo}>
+            {t("topbar.undo")}
           </button>
+          <button type="button" onClick={redo}>
+            {t("topbar.redo")}
+          </button>
+          <button type="button" onClick={() => void runAutoLayout()}>
+            {t("topbar.autoLayout")}
+          </button>
+          <LanguageSwitcher />
         </div>
-        <button type="button" onClick={goToStart}>
-          {t("topbar.templates")}
-        </button>
-        <button type="button" onClick={undo}>
-          {t("topbar.undo")}
-        </button>
-        <button type="button" onClick={redo}>
-          {t("topbar.redo")}
-        </button>
-        <button type="button" onClick={() => void runAutoLayout()}>
-          {t("topbar.autoLayout")}
-        </button>
-        <LanguageSwitcher />
-        <span className="spacer" />
 
-        {autosaveStatus !== "idle" && (
-          <span className={`autosave-status ${autosaveStatus}`}>
-            <span className="dot" />
-            {autosaveStatus === "saving" ? t("topbar.saving") : t("topbar.autosaved")}
+        <div className="topbar-actions">
+          {autosaveStatus !== "idle" && (
+            <span className={`autosave-status ${autosaveStatus}`}>
+              <span className="dot" />
+              {autosaveStatus === "saving" ? t("topbar.saving") : t("topbar.autosaved")}
+            </span>
+          )}
+          <span className="meta tech-only">
+            {viewMode === "business"
+              ? `${fileName ?? t("topbar.unsaved")} · ${doc?.domain} v${doc?.version}${
+                  doc?.based_on
+                    ? ` · ${t("topbar.basedOn", { id: doc.based_on.id, version: doc.based_on.version })}`
+                    : ""
+                }`
+              : (mappingFileName ?? `${doc?.domain ?? "domain"}.technical_mapping.yaml`)}
           </span>
-        )}
-        <span className="meta tech-only">
-          {viewMode === "business"
-            ? `${fileName ?? t("topbar.unsaved")} · ${doc?.domain} v${doc?.version}${
-                doc?.based_on
-                  ? ` · ${t("topbar.basedOn", { id: doc.based_on.id, version: doc.based_on.version })}`
-                  : ""
-              }`
-            : (mappingFileName ?? `${doc?.domain ?? "domain"}.technical_mapping.yaml`)}
-        </span>
-        <HeaderMenu onOpenMermaid={onOpenMermaid} />
+          <HeaderMenu onOpenMermaid={onOpenMermaid} />
+        </div>
       </header>
       {viewMode === "business" && validationErrors.length > 0 && (
         <div className="errors tech-only">

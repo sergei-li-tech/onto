@@ -54,12 +54,34 @@ body {
 
 .topbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 10px 16px;
   background: #0f172a;
   color: #f8fafc;
+  flex-wrap: nowrap;
+}
+
+.topbar-main {
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.topbar-actions .meta {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .topbar h1 {
