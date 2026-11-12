@@ -52,16 +52,26 @@ export function measureGraphBounds(root: ParentNode = document): Box | null {
   const matrix = computed && computed !== "none" ? new DOMMatrixReadOnly(computed) : new DOMMatrixReadOnly();
   const inverse = matrix.inverse();
 
-  const boxes = nodes.map((node) => {
-    const rect = node.getBoundingClientRect();
-    const topLeft = inverse.transformPoint(
-      new DOMPoint(rect.left - viewportRect.left, rect.top - viewportRect.top),
-    );
-    const bottomRight = inverse.transformPoint(
-      new DOMPoint(rect.right - viewportRect.left, rect.bottom - viewportRect.top),
-    );
-    return boxBetween(topLeft, bottomRight);
-  });
+  const boxes: Box[] = [];
+  for (const node of nodes) {
+    // An expanded entity renders its field list outside the measured node box,
+    // so every visible descendant is taken into account as well.
+    const parts = [
+      node,
+      ...Array.from(node.querySelectorAll<HTMLElement>("*")).filter((el) => !isExportChrome(el)),
+    ];
+    for (const part of parts) {
+      const rect = part.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) continue;
+      const topLeft = inverse.transformPoint(
+        new DOMPoint(rect.left - viewportRect.left, rect.top - viewportRect.top),
+      );
+      const bottomRight = inverse.transformPoint(
+        new DOMPoint(rect.right - viewportRect.left, rect.bottom - viewportRect.top),
+      );
+      boxes.push(boxBetween(topLeft, bottomRight));
+    }
+  }
 
   return unionBoxes(boxes);
 }
