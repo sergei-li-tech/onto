@@ -11,6 +11,23 @@ import {
 
 export const GRAPH_VIEWPORT_SELECTOR = ".react-flow__viewport";
 export const GRAPH_NODE_SELECTOR = ".react-flow__node";
+export const PNG_TIMEOUT_MS = 20000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`PNG render timed out after ${timeoutMs} ms`)), timeoutMs);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
 
 /** UI chrome that must not appear in the exported picture. */
 function isExportChrome(element: HTMLElement): boolean {
@@ -83,19 +100,25 @@ export async function downloadGraphPng(doc: Ontology, root: ParentNode = documen
   if (!viewport || !bounds) throw new Error("graph is not rendered");
 
   const geometry = captureGeometry(bounds);
-  const dataUrl = await toPng(viewport, {
-    width: geometry.width,
-    height: geometry.height,
-    pixelRatio: 1,
-    backgroundColor: PNG_BACKGROUND,
-    style: {
-      // html-to-image applies `width`/`height` to the clone too, so only the
-      // transform (which positions the whole graph at 2×) is overridden here.
-      transform: geometry.transform,
-      transformOrigin: "0 0",
-    },
-    filter: (node) => !(node instanceof HTMLElement) || !isExportChrome(node),
-  });
+  const dataUrl = await withTimeout(
+    toPng(viewport, {
+      width: geometry.width,
+      height: geometry.height,
+      pixelRatio: 1,
+      backgroundColor: PNG_BACKGROUND,
+      // The picture uses the app's system fonts; embedding web fonts only adds
+      // a stylesheet fetch round-trip that can stall the export.
+      skipFonts: true,
+      style: {
+        // html-to-image applies `width`/`height` to the clone too, so only the
+        // transform (which positions the whole graph at 2×) is overridden here.
+        transform: geometry.transform,
+        transformOrigin: "0 0",
+      },
+      filter: (node) => !(node instanceof HTMLElement) || !isExportChrome(node),
+    }),
+    PNG_TIMEOUT_MS,
+  );
 
   triggerDownload(dataUrl, pngFileName(doc.domain));
 }
