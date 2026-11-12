@@ -34,6 +34,18 @@ export const ru: Dict = {
   "topbar.saveMappingAs": "Сохранить маппинг как…",
   "topbar.saveMapping": "Сохранить маппинг",
 
+  "menu.label": "Сохранить и экспорт",
+  "menu.fileGroup": "Файл",
+  "menu.exportGroup": "Экспорт",
+  "menu.mermaidER": "Mermaid: ER-диаграмма (.mmd)",
+  "menu.mermaidFlowchart": "Mermaid: flowchart (.mmd)",
+  "menu.mermaidStates": "Mermaid: состояния (.mmd)",
+  "menu.mermaidOpen": "Mermaid: просмотр и копирование",
+  "menu.png": "PNG: картинка схемы",
+  "menu.pngHint": "Вся схема, масштаб 2×",
+  "menu.pngBusy": "Собираем PNG…",
+  "menu.pngFailed": "Не удалось собрать PNG: {{error}}",
+
   "infra.title": "Инфраструктура",
   "infra.dataSources": "Источники данных",
   "infra.mcpConnectors": "MCP-коннекторы",

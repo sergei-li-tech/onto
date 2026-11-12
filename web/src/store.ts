@@ -81,12 +81,15 @@ type Store = {
   backToStart: () => void;
 
   viewMode: ViewMode;
+  /** When true the graph renders every entity expanded — used for whole-graph PNG export. */
+  captureMode: boolean;
   mappingDoc: TechnicalMapping | null;
   mappingFileHandle: FileSystemFileHandle | null;
   mappingFileName: string | null;
   mappingValidationErrors: ValidationIssue[];
 
   setViewMode: (mode: ViewMode) => void;
+  setCaptureMode: (on: boolean) => void;
   loadMappingDocument: (mapping: TechnicalMapping, handle?: FileSystemFileHandle | null, name?: string | null) => void;
   initTechnicalMapping: () => void;
   patchMappingDoc: (updater: (m: TechnicalMapping) => TechnicalMapping) => void;
@@ -146,6 +149,7 @@ export const useOntologyStore = create<Store>((set, get) => {
     redoStack: [],
     autosaveStatus: "idle",
     viewMode: "business",
+    captureMode: false,
     mappingDoc: null,
     mappingFileHandle: null,
     mappingFileName: null,
@@ -163,6 +167,7 @@ export const useOntologyStore = create<Store>((set, get) => {
         redoStack: [],
         autosaveStatus: "idle",
         viewMode: "business",
+        captureMode: false,
         mappingDoc: null,
         mappingFileHandle: null,
         mappingFileName: null,
@@ -183,6 +188,7 @@ export const useOntologyStore = create<Store>((set, get) => {
         redoStack: [],
         autosaveStatus: "saved",
         viewMode: "business",
+        captureMode: false,
         mappingDoc: null,
         mappingFileHandle: null,
         mappingFileName: null,
@@ -528,6 +534,7 @@ export const useOntologyStore = create<Store>((set, get) => {
         invariantViolations: [],
         autosaveStatus: "idle",
         viewMode: "business",
+        captureMode: false,
         mappingDoc: null,
         mappingFileHandle: null,
         mappingFileName: null,
@@ -541,6 +548,8 @@ export const useOntologyStore = create<Store>((set, get) => {
       }
       set({ viewMode: mode });
     },
+
+    setCaptureMode: (on) => set({ captureMode: on }),
 
     loadMappingDocument: (mapping, handle = null, name = null) => {
       const { doc } = get();
