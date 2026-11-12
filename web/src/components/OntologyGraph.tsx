@@ -32,11 +32,12 @@ function buildFlowNodes(
   onToggle: (id: string) => void,
   viewMode: ReturnType<typeof useOntologyStore.getState>["viewMode"],
   mappingDoc: ReturnType<typeof useOntologyStore.getState>["mappingDoc"],
+  captureMode: boolean,
 ): Node[] {
   return doc.entities.map((e) => {
     const pos = positions.get(e.id) ?? { x: 0, y: 0 };
     const selected = selection?.kind === "entity" && selection.id === e.id;
-    const expanded = expandedId === e.id;
+    const expanded = captureMode || expandedId === e.id;
     const entMapping = mappingDoc?.entity_mappings?.[e.id];
     const coverage = getEntityMappingCoverage(e, entMapping);
     return {
@@ -108,6 +109,7 @@ export function OntologyGraph({ doc }: { doc: Ontology }) {
   const selection = useOntologyStore((s) => s.selection);
   const viewMode = useOntologyStore((s) => s.viewMode);
   const mappingDoc = useOntologyStore((s) => s.mappingDoc);
+  const captureMode = useOntologyStore((s) => s.captureMode);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const toggleFields = useCallback((id: string) => {
@@ -123,8 +125,8 @@ export function OntologyGraph({ doc }: { doc: Ontology }) {
   const positions = useMemo(() => layoutPositions(doc), [doc]);
 
   const flowNodes = useMemo(
-    () => buildFlowNodes(doc, positions, selection, expandedId, toggleFields, viewMode, mappingDoc),
-    [doc, positions, selection, expandedId, toggleFields, viewMode, mappingDoc],
+    () => buildFlowNodes(doc, positions, selection, expandedId, toggleFields, viewMode, mappingDoc, captureMode),
+    [doc, positions, selection, expandedId, toggleFields, viewMode, mappingDoc, captureMode],
   );
 
   const flowEdges = useMemo(
