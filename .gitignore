@@ -30,3 +30,6 @@ docs/
 .beads-credential-key
 .beads/proxieddb/
 *.gate.lock*
+
+# Hermes kanban worktrees (dispatcher-created, one per card)
+.worktrees/
